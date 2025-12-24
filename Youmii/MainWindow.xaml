@@ -207,40 +207,22 @@
                 MouseLeftButtonDown="Character_MouseLeftButtonDown"
                 Background="Transparent">
             <Grid>
-                <!-- Placeholder circle if no image -->
-                <Ellipse Width="150" Height="150"
-                         Fill="#FFE8E8E8"
-                         Stroke="#FFCCCCCC"
-                         StrokeThickness="2">
-                    <Ellipse.Effect>
+                <Image Source="/Assets/character.png" 
+                       Width="200" 
+                       Height="200" 
+                       Stretch="Uniform">
+                    <Image.Effect>
                         <DropShadowEffect BlurRadius="15" ShadowDepth="3" Opacity="0.3" />
-                    </Ellipse.Effect>
-                </Ellipse>
-                
-                <!-- Character face (simple emoji-style) -->
-                <Canvas Width="150" Height="150">
-                    <!-- Eyes -->
-                    <Ellipse Canvas.Left="40" Canvas.Top="50" Width="20" Height="25" Fill="#FF333333" />
-                    <Ellipse Canvas.Left="90" Canvas.Top="50" Width="20" Height="25" Fill="#FF333333" />
-                    <!-- Eye highlights -->
-                    <Ellipse Canvas.Left="45" Canvas.Top="55" Width="8" Height="8" Fill="White" />
-                    <Ellipse Canvas.Left="95" Canvas.Top="55" Width="8" Height="8" Fill="White" />
-                    <!-- Mouth (smile) -->
-                    <Path Data="M 45,100 Q 75,130 105,100" 
-                          Stroke="#FF333333" 
-                          StrokeThickness="4" 
-                          StrokeLineCap="Round" />
-                    <!-- Blush -->
-                    <Ellipse Canvas.Left="25" Canvas.Top="85" Width="25" Height="15" Fill="#FFFFCCCC" Opacity="0.6" />
-                    <Ellipse Canvas.Left="100" Canvas.Top="85" Width="25" Height="15" Fill="#FFFFCCCC" Opacity="0.6" />
-                </Canvas>
+                    </Image.Effect>
+                </Image>
 
                 <!-- Hover effect -->
-                <Ellipse x:Name="HoverOverlay"
-                         Width="150" Height="150"
-                         Fill="White"
-                         Opacity="0">
-                    <Ellipse.Triggers>
+                <Border x:Name="HoverOverlay"
+                        Width="200" 
+                        Height="200"
+                        Background="White"
+                        Opacity="0">
+                    <Border.Triggers>
                         <EventTrigger RoutedEvent="MouseEnter">
                             <BeginStoryboard>
                                 <Storyboard>
@@ -257,8 +239,8 @@
                                 </Storyboard>
                             </BeginStoryboard>
                         </EventTrigger>
-                    </Ellipse.Triggers>
-                </Ellipse>
+                    </Border.Triggers>
+                </Border>
             </Grid>
         </Border>
 
