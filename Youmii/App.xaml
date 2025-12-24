@@ -2,8 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Youmii"
+             xmlns:converters="clr-namespace:Youmii.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
     </Application.Resources>
 </Application>
