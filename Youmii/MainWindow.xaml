@@ -10,7 +10,7 @@
         mc:Ignorable="d"
         Title="Youmii"
         Width="400"
-        Height="500"
+        Height="550"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -28,9 +28,6 @@
     </Window.DataContext>
 
     <Window.Resources>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
-
         <!-- Fade In Storyboard -->
         <Storyboard x:Key="FadeIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
@@ -50,75 +47,6 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
-
-        <!-- Speech Bubble Style -->
-        <Style x:Key="SpeechBubbleStyle" TargetType="Border">
-            <Setter Property="Background" Value="#FFFFFFFF" />
-            <Setter Property="BorderBrush" Value="#FF333333" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="CornerRadius" Value="15" />
-            <Setter Property="Padding" Value="15,10" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.3" />
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Input Panel Style -->
-        <Style x:Key="InputBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#FFFFFFFF" />
-            <Setter Property="BorderBrush" Value="#FF666666" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="2" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Send Button Style -->
-        <Style x:Key="SendButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#FF4A90D9" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="15,8" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF3A7BC8" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#FF2A5B98" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#FFCCCCCC" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Grid Margin="20">
@@ -131,7 +59,7 @@
         <!-- Speech Bubble -->
         <Border Grid.Row="0"
                 x:Name="SpeechBubble"
-                Style="{StaticResource SpeechBubbleStyle}"
+                Style="{StaticResource KawaiiSpeechBubbleStyle}"
                 HorizontalAlignment="Center"
                 MaxWidth="350"
                 Visibility="{Binding IsBubbleVisible, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -139,14 +67,15 @@
                 <TextBlock Text="{Binding BubbleText}"
                            TextWrapping="Wrap"
                            FontSize="14"
-                           Foreground="#FF333333"
+                           FontFamily="Segoe UI"
+                           Foreground="{StaticResource TextDarkBrush}"
                            MaxWidth="300"
                            Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
                 
-                <!-- Loading indicator -->
+                <!-- Loading indicator with pink dots -->
                 <StackPanel Orientation="Horizontal" 
                             Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Ellipse Width="8" Height="8" Fill="#FF4A90D9" Margin="2">
+                    <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -159,7 +88,7 @@
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
-                    <Ellipse Width="8" Height="8" Fill="#FF4A90D9" Margin="2">
+                    <Ellipse Width="10" Height="10" Fill="{StaticResource AccentPurpleBrush}" Margin="3">
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -172,7 +101,7 @@
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
-                    <Ellipse Width="8" Height="8" Fill="#FF4A90D9" Margin="2">
+                    <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -189,11 +118,11 @@
             </Grid>
         </Border>
 
-        <!-- Bubble pointer (triangle) -->
+        <!-- Bubble pointer (triangle) - pink themed -->
         <Polygon Grid.Row="0"
                  Points="0,0 15,0 7.5,10"
-                 Fill="White"
-                 Stroke="#FF333333"
+                 Fill="{StaticResource LightPinkBrush}"
+                 Stroke="{StaticResource SoftPinkBrush}"
                  StrokeThickness="2"
                  HorizontalAlignment="Center"
                  VerticalAlignment="Bottom"
@@ -213,7 +142,7 @@
                        Height="200" 
                        Stretch="Uniform">
                     <Image.Effect>
-                        <DropShadowEffect BlurRadius="15" ShadowDepth="3" Opacity="0.3" />
+                        <DropShadowEffect Color="#FFE91E63" BlurRadius="20" ShadowDepth="3" Opacity="0.3" />
                     </Image.Effect>
                 </Image>
 
@@ -237,36 +166,48 @@
             </Grid>
         </Border>
 
-        <!-- Input Panel -->
+        <!-- Kawaii Input Panel ✨ -->
         <Border Grid.Row="2"
-                Background="#F0FFFFFF"
-                CornerRadius="10"
-                Padding="10"
+                Style="{StaticResource KawaiiChatPanelStyle}"
                 Visibility="{Binding IsInputVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                 HorizontalAlignment="Center"
-                MinWidth="300">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2" />
-            </Border.Effect>
+                MinWidth="320">
             <StackPanel>
+                <!-- Header with sparkle -->
+                <TextBlock Text="💬 Chat with me~"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource PrimaryPinkBrush}"
+                           Margin="5,0,0,8"
+                           Opacity="0.8"/>
+                
+                <!-- Input TextBox -->
                 <TextBox x:Name="InputTextBox"
-                         Style="{StaticResource InputBoxStyle}"
+                         Style="{StaticResource KawaiiInputBoxStyle}"
                          Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
                          IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
                          KeyDown="InputTextBox_KeyDown" />
                 
-                <StackPanel Orientation="Horizontal" 
-                            HorizontalAlignment="Right"
-                            Margin="0,10,0,0">
-                    <Button Content="Clear"
-                            Style="{StaticResource SendButtonStyle}"
-                            Background="#FF999999"
-                            Command="{Binding ClearHistoryCommand}"
-                            Margin="0,0,10,0" />
-                    <Button Content="Send"
-                            Style="{StaticResource SendButtonStyle}"
+                <!-- Buttons Row -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Clear button on left -->
+                    <Button Grid.Column="0"
+                            Content="🗑️ Clear"
+                            Style="{StaticResource KawaiiSecondaryButtonStyle}"
+                            Command="{Binding ClearHistoryCommand}"/>
+                    
+                    <!-- Send button on right -->
+                    <Button Grid.Column="2"
+                            Content="Send 💕"
+                            Style="{StaticResource KawaiiSendButtonStyle}"
                             Command="{Binding SendCommand}" />
-                </StackPanel>
+                </Grid>
             </StackPanel>
         </Border>
     </Grid>
