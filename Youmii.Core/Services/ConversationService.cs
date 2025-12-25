@@ -6,7 +6,7 @@ namespace Youmii.Core.Services;
 /// <summary>
 /// Orchestrates the conversation flow: saving messages, extracting facts, calling brain.
 /// </summary>
-public sealed class ConversationService
+public sealed class ConversationService : IConversationService
 {
     private readonly IMessageRepository _messageRepository;
     private readonly IFactRepository _factRepository;
@@ -19,17 +19,17 @@ public sealed class ConversationService
         IFactExtractor factExtractor,
         int maxHistoryMessages = 20)
     {
-        _messageRepository = messageRepository;
-        _factRepository = factRepository;
-        _factExtractor = factExtractor;
+        _messageRepository = messageRepository ?? throw new ArgumentNullException(nameof(messageRepository));
+        _factRepository = factRepository ?? throw new ArgumentNullException(nameof(factRepository));
+        _factExtractor = factExtractor ?? throw new ArgumentNullException(nameof(factExtractor));
         _maxHistoryMessages = maxHistoryMessages;
     }
 
-    /// <summary>
-    /// Processes a user message: saves it, extracts facts, builds request payload.
-    /// </summary>
-    public async Task<(ChatMessage savedMessage, BrainRequest request)> PrepareRequestAsync(string userInput)
+    /// <inheritdoc />
+    public async Task<ConversationPrepareResult> PrepareRequestAsync(string userInput)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userInput);
+
         // Save user message
         var userMessage = ChatMessage.User(userInput);
         var saved = await _messageRepository.AddMessageAsync(userMessage);
@@ -43,7 +43,7 @@ public sealed class ConversationService
 
         // Load history (excluding current message, it's included separately)
         var history = await _messageRepository.GetRecentMessagesAsync(_maxHistoryMessages);
-        
+
         // Load all facts
         var allFacts = await _factRepository.GetAllFactsAsync();
 
@@ -52,53 +52,36 @@ public sealed class ConversationService
         {
             Message = userInput,
             History = history
-                .Where(m => m.Id != saved.Id) // Exclude current message from history
+                .Where(m => m.Id != saved.Id)
                 .Select(BrainHistoryItem.FromChatMessage)
                 .ToList(),
             Facts = allFacts.ToDictionary(f => f.Key, f => f.Value)
         };
 
-        return (saved, request);
+        return new ConversationPrepareResult
+        {
+            SavedMessage = saved,
+            Request = request
+        };
     }
 
-    /// <summary>
-    /// Saves the assistant's response.
-    /// </summary>
-    public async Task<ChatMessage> SaveResponseAsync(string reply)
+    /// <inheritdoc />
+    public async Task SaveResponseAsync(string reply)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reply);
         var assistantMessage = ChatMessage.Assistant(reply);
-        return await _messageRepository.AddMessageAsync(assistantMessage);
+        await _messageRepository.AddMessageAsync(assistantMessage);
     }
 
-    /// <summary>
-    /// Gets recent conversation history.
-    /// </summary>
+    /// <inheritdoc />
     public Task<IReadOnlyList<ChatMessage>> GetHistoryAsync(int? limit = null)
     {
         return _messageRepository.GetRecentMessagesAsync(limit ?? _maxHistoryMessages);
     }
 
-    /// <summary>
-    /// Clears all conversation history.
-    /// </summary>
+    /// <inheritdoc />
     public Task ClearHistoryAsync()
     {
         return _messageRepository.ClearAsync();
-    }
-
-    /// <summary>
-    /// Trims history to keep only the most recent N messages.
-    /// Returns the number of messages after trimming.
-    /// </summary>
-    public static IReadOnlyList<ChatMessage> TrimHistory(IReadOnlyList<ChatMessage> messages, int maxCount)
-    {
-        if (messages.Count <= maxCount)
-            return messages;
-
-        return messages
-            .OrderByDescending(m => m.CreatedAt)
-            .Take(maxCount)
-            .OrderBy(m => m.CreatedAt)
-            .ToList();
     }
 }

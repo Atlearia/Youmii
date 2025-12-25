@@ -1,25 +1,27 @@
 using Microsoft.Data.Sqlite;
+using Youmii.Core.Interfaces;
 
 namespace Youmii.Infrastructure.Persistence;
 
 /// <summary>
 /// Manages SQLite database initialization and connection.
 /// </summary>
-public sealed class DatabaseInitializer : IDisposable
+public sealed class SqliteDatabaseInitializer : IDatabaseInitializer, ISqliteConnectionFactory, IDisposable
 {
     private readonly string _connectionString;
-    private SqliteConnection? _connection;
+    private bool _disposed;
 
-    public DatabaseInitializer(string dbPath)
+    public SqliteDatabaseInitializer(string dbPath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dbPath);
         _connectionString = $"Data Source={dbPath}";
     }
 
-    /// <summary>
-    /// Initializes the database schema if it doesn't exist.
-    /// </summary>
+    /// <inheritdoc />
     public async Task InitializeAsync()
     {
+        ThrowIfDisposed();
+
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
@@ -44,16 +46,20 @@ public sealed class DatabaseInitializer : IDisposable
         await command.ExecuteNonQueryAsync();
     }
 
-    /// <summary>
-    /// Gets a new connection to the database.
-    /// </summary>
+    /// <inheritdoc />
     public SqliteConnection CreateConnection()
     {
+        ThrowIfDisposed();
         return new SqliteConnection(_connectionString);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     public void Dispose()
     {
-        _connection?.Dispose();
+        _disposed = true;
     }
 }
