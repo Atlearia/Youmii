@@ -9,16 +9,18 @@ namespace Youmii.Infrastructure.Persistence;
 /// </summary>
 public sealed class SqliteMessageRepository : IMessageRepository
 {
-    private readonly DatabaseInitializer _db;
+    private readonly ISqliteConnectionFactory _connectionFactory;
 
-    public SqliteMessageRepository(DatabaseInitializer db)
+    public SqliteMessageRepository(ISqliteConnectionFactory connectionFactory)
     {
-        _db = db;
+        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
     }
 
     public async Task<ChatMessage> AddMessageAsync(ChatMessage message)
     {
-        await using var connection = _db.CreateConnection();
+        ArgumentNullException.ThrowIfNull(message);
+
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();
@@ -40,7 +42,9 @@ public sealed class SqliteMessageRepository : IMessageRepository
 
     public async Task<IReadOnlyList<ChatMessage>> GetRecentMessagesAsync(int limit)
     {
-        await using var connection = _db.CreateConnection();
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();
@@ -74,7 +78,7 @@ public sealed class SqliteMessageRepository : IMessageRepository
 
     public async Task ClearAsync()
     {
-        await using var connection = _db.CreateConnection();
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();

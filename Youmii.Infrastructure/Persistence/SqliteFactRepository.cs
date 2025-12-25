@@ -9,16 +9,19 @@ namespace Youmii.Infrastructure.Persistence;
 /// </summary>
 public sealed class SqliteFactRepository : IFactRepository
 {
-    private readonly DatabaseInitializer _db;
+    private readonly ISqliteConnectionFactory _connectionFactory;
 
-    public SqliteFactRepository(DatabaseInitializer db)
+    public SqliteFactRepository(ISqliteConnectionFactory connectionFactory)
     {
-        _db = db;
+        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
     }
 
     public async Task UpsertFactAsync(string key, string value)
     {
-        await using var connection = _db.CreateConnection();
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();
@@ -39,7 +42,9 @@ public sealed class SqliteFactRepository : IFactRepository
 
     public async Task<Fact?> GetFactAsync(string key)
     {
-        await using var connection = _db.CreateConnection();
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();
@@ -68,7 +73,7 @@ public sealed class SqliteFactRepository : IFactRepository
 
     public async Task<IReadOnlyList<Fact>> GetAllFactsAsync()
     {
-        await using var connection = _db.CreateConnection();
+        await using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();
 
         var command = connection.CreateCommand();
