@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using Youmii.Core.Interfaces;
+using Youmii.Core.Models;
 using Youmii.Core.Services;
 using Youmii.Infrastructure;
 
@@ -11,7 +12,7 @@ namespace Youmii.ViewModels;
 public sealed class MainViewModel : ViewModelBase, IDisposable
 {
     private readonly ServiceFactory _serviceFactory;
-    private readonly ConversationService _conversationService;
+    private readonly IConversationService _conversationService;
     private readonly IBrainClient _brainClient;
     private readonly DispatcherTimer _autoHideTimer;
     private readonly int _autoHideSeconds;
@@ -22,6 +23,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private bool _isInputVisible;
     private bool _isLoading;
     private bool _isOverlayVisible = true;
+    private bool _isCharacterDimmed;
 
     public MainViewModel()
     {
@@ -40,6 +42,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             _autoHideTimer.Stop();
         };
 
+        // Initialize RadialMenu with service
+        var radialMenuService = new RadialMenuService();
+        RadialMenu = new RadialMenuViewModel(radialMenuService);
+
         SendCommand = new AsyncRelayCommand(SendMessageAsync, () => CanSend);
         ToggleInputCommand = new RelayCommand(ToggleInput);
         ToggleOverlayCommand = new RelayCommand(ToggleOverlay);
@@ -47,6 +53,20 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         // Initialize database
         _ = InitializeAsync();
+    }
+
+    /// <summary>
+    /// Gets the radial menu ViewModel.
+    /// </summary>
+    public RadialMenuViewModel RadialMenu { get; }
+
+    /// <summary>
+    /// Gets or sets whether the character image is dimmed (when radial menu is open).
+    /// </summary>
+    public bool IsCharacterDimmed
+    {
+        get => _isCharacterDimmed;
+        set => SetProperty(ref _isCharacterDimmed, value);
     }
 
     public string UserInput
@@ -104,6 +124,27 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public RelayCommand ToggleOverlayCommand { get; }
     public AsyncRelayCommand ClearHistoryCommand { get; }
 
+    /// <summary>
+    /// Handles when a radial menu item is selected.
+    /// Called from MainWindow after the item selection event.
+    /// </summary>
+    public void HandleRadialMenuItemSelected(RadialMenuItem item)
+    {
+        // Handle specific menu item actions
+        switch (item.Id)
+        {
+            case "chat":
+                IsInputVisible = true;
+                break;
+            // Other menu items are placeholders for now
+            default:
+                BubbleText = $"{item.Icon} {item.Label} - Coming soon!";
+                IsBubbleVisible = true;
+                ResetAutoHideTimer();
+                break;
+        }
+    }
+
     private async Task InitializeAsync()
     {
         try
@@ -111,7 +152,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             await _serviceFactory.InitializeAsync();
             
             // Show welcome message
-            BubbleText = "Hello! Click me to start chatting!";
+            BubbleText = "Hello! Hold click on me for options!";
             IsBubbleVisible = true;
             ResetAutoHideTimer();
         }
@@ -133,14 +174,14 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         try
         {
             // Prepare request (saves user message, extracts facts)
-            var (_, request) = await _conversationService.PrepareRequestAsync(input);
+            var result = await _conversationService.PrepareRequestAsync(input);
 
             // Show "thinking" state
             BubbleText = "...";
             IsBubbleVisible = true;
 
             // Send to brain
-            var response = await _brainClient.SendMessageAsync(request);
+            var response = await _brainClient.SendMessageAsync(result.Request);
 
             // Save response
             await _conversationService.SaveResponseAsync(response.Reply);

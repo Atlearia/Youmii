@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:Youmii.ViewModels"
         xmlns:converters="clr-namespace:Youmii.Converters"
         xmlns:behaviors="clr-namespace:Youmii.Behaviors"
+        xmlns:controls="clr-namespace:Youmii.Controls"
         mc:Ignorable="d"
         Title="Youmii"
         Width="400"
@@ -47,168 +48,205 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
         </Storyboard>
+        
+        <!-- Character Dim Storyboard -->
+        <Storyboard x:Key="CharacterDimIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                             To="0.4" Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        
+        <Storyboard x:Key="CharacterDimOut">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                             To="1" Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
     </Window.Resources>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!-- Root Grid to allow radial menu overlay -->
+    <Grid>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- Speech Bubble -->
-        <Border Grid.Row="0"
-                x:Name="SpeechBubble"
-                Style="{StaticResource KawaiiSpeechBubbleStyle}"
-                HorizontalAlignment="Center"
-                MaxWidth="350"
-                Visibility="{Binding IsBubbleVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Grid>
-                <TextBlock Text="{Binding BubbleText}"
-                           TextWrapping="Wrap"
-                           FontSize="14"
-                           FontFamily="Segoe UI"
-                           Foreground="{StaticResource TextDarkBrush}"
-                           MaxWidth="300"
-                           Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
-                
-                <!-- Loading indicator with pink dots -->
-                <StackPanel Orientation="Horizontal" 
-                            Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="0.3" To="1" Duration="0:0:0.5"
-                                                         AutoReverse="True" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-                    <Ellipse Width="10" Height="10" Fill="{StaticResource AccentPurpleBrush}" Margin="3">
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.15">
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="0.3" To="1" Duration="0:0:0.5"
-                                                         AutoReverse="True" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-                    <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.3">
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="0.3" To="1" Duration="0:0:0.5"
-                                                         AutoReverse="True" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Bubble pointer (triangle) - pink themed -->
-        <Polygon Grid.Row="0"
-                 Points="0,0 15,0 7.5,10"
-                 Fill="{StaticResource LightPinkBrush}"
-                 Stroke="{StaticResource SoftPinkBrush}"
-                 StrokeThickness="2"
-                 HorizontalAlignment="Center"
-                 VerticalAlignment="Bottom"
-                 Margin="0,0,0,-10"
-                 Visibility="{Binding IsBubbleVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
-
-        <!-- Character Image (clickable) -->
-        <Border Grid.Row="1"
-                HorizontalAlignment="Center"
-                Margin="0,15,0,10"
-                Cursor="Hand"
-                MouseLeftButtonDown="Character_MouseLeftButtonDown"
-                Background="Transparent">
-            <Grid>
-                <Image Source="/Assets/character.png" 
-                       Width="200" 
-                       Height="200" 
-                       Stretch="Uniform">
-                    <Image.Effect>
-                        <DropShadowEffect Color="#FFE91E63" BlurRadius="20" ShadowDepth="3" Opacity="0.3" />
-                    </Image.Effect>
-                </Image>
-
-                <!-- Drag handle (top area) -->
-                <Border x:Name="DragHandle"
-                        Width="60" 
-                        Height="30"
-                        VerticalAlignment="Top"
-                        HorizontalAlignment="Center"
-                        Margin="0,5,0,0"
-                        Background="#80000000"
-                        CornerRadius="5"
-                        Cursor="SizeAll"
-                        behaviors:DragBehavior.EnableDrag="True">
-                    <TextBlock Text="≡" 
-                               Foreground="White" 
-                               FontSize="16" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center"/>
-                </Border>
-            </Grid>
-        </Border>
-
-        <!-- Kawaii Input Panel ✨ -->
-        <Border Grid.Row="2"
-                Style="{StaticResource KawaiiChatPanelStyle}"
-                Visibility="{Binding IsInputVisible, Converter={StaticResource BoolToVisibilityConverter}}"
-                HorizontalAlignment="Center"
-                MinWidth="320">
-            <StackPanel>
-                <!-- Header with sparkle -->
-                <TextBlock Text="💬 Chat with me~"
-                           FontSize="12"
-                           FontWeight="Medium"
-                           Foreground="{StaticResource PrimaryPinkBrush}"
-                           Margin="5,0,0,8"
-                           Opacity="0.8"/>
-                
-                <!-- Input TextBox -->
-                <TextBox x:Name="InputTextBox"
-                         Style="{StaticResource KawaiiInputBoxStyle}"
-                         Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
-                         IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
-                         KeyDown="InputTextBox_KeyDown" />
-                
-                <!-- Buttons Row -->
-                <Grid Margin="0,12,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+            <!-- Speech Bubble -->
+            <Border Grid.Row="0"
+                    x:Name="SpeechBubble"
+                    Style="{StaticResource KawaiiSpeechBubbleStyle}"
+                    HorizontalAlignment="Center"
+                    MaxWidth="350"
+                    Visibility="{Binding IsBubbleVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid>
+                    <TextBlock Text="{Binding BubbleText}"
+                               TextWrapping="Wrap"
+                               FontSize="14"
+                               FontFamily="Segoe UI"
+                               Foreground="{StaticResource TextDarkBrush}"
+                               MaxWidth="300"
+                               Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
                     
-                    <!-- Clear button on left -->
-                    <Button Grid.Column="0"
-                            Content="🗑️ Clear"
-                            Style="{StaticResource KawaiiSecondaryButtonStyle}"
-                            Command="{Binding ClearHistoryCommand}"/>
-                    
-                    <!-- Send button on right -->
-                    <Button Grid.Column="2"
-                            Content="Send 💕"
-                            Style="{StaticResource KawaiiSendButtonStyle}"
-                            Command="{Binding SendCommand}" />
+                    <!-- Loading indicator with pink dots -->
+                    <StackPanel Orientation="Horizontal" 
+                                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0.3" To="1" Duration="0:0:0.5"
+                                                             AutoReverse="True" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="10" Height="10" Fill="{StaticResource AccentPurpleBrush}" Margin="3">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.15">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0.3" To="1" Duration="0:0:0.5"
+                                                             AutoReverse="True" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="10" Height="10" Fill="{StaticResource PrimaryPinkBrush}" Margin="3">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" BeginTime="0:0:0.3">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0.3" To="1" Duration="0:0:0.5"
+                                                             AutoReverse="True" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </StackPanel>
                 </Grid>
-            </StackPanel>
-        </Border>
+            </Border>
+
+            <!-- Bubble pointer (triangle) - pink themed -->
+            <Polygon Grid.Row="0"
+                     Points="0,0 15,0 7.5,10"
+                     Fill="{StaticResource LightPinkBrush}"
+                     Stroke="{StaticResource SoftPinkBrush}"
+                     StrokeThickness="2"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Bottom"
+                     Margin="0,0,0,-10"
+                     Visibility="{Binding IsBubbleVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <!-- Character Image (clickable) -->
+            <Border Grid.Row="1"
+                    x:Name="CharacterBorder"
+                    HorizontalAlignment="Center"
+                    Margin="0,15,0,10"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="Character_MouseLeftButtonDown"
+                    MouseLeftButtonUp="Character_MouseLeftButtonUp"
+                    Background="Transparent">
+                <Grid>
+                    <Image x:Name="CharacterImage"
+                           Source="/Assets/character.png" 
+                           Width="200" 
+                           Height="200" 
+                           Stretch="Uniform">
+                        <Image.Effect>
+                            <DropShadowEffect Color="#FFE91E63" BlurRadius="20" ShadowDepth="3" Opacity="0.3" />
+                        </Image.Effect>
+                    </Image>
+
+                    <!-- Drag handle (top area) -->
+                    <Border x:Name="DragHandle"
+                            Width="60" 
+                            Height="30"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Center"
+                            Margin="0,5,0,0"
+                            Background="#80000000"
+                            CornerRadius="5"
+                            Cursor="SizeAll"
+                            behaviors:DragBehavior.EnableDrag="True">
+                        <TextBlock Text="≡" 
+                                   Foreground="White" 
+                                   FontSize="16" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Kawaii Input Panel ✨ -->
+            <Border Grid.Row="2"
+                    Style="{StaticResource KawaiiChatPanelStyle}"
+                    Visibility="{Binding IsInputVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                    HorizontalAlignment="Center"
+                    MinWidth="320">
+                <StackPanel>
+                    <!-- Header with sparkle -->
+                    <TextBlock Text="💬 Chat with me~"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource PrimaryPinkBrush}"
+                               Margin="5,0,0,8"
+                               Opacity="0.8"/>
+                    
+                    <!-- Input TextBox -->
+                    <TextBox x:Name="InputTextBox"
+                             Style="{StaticResource KawaiiInputBoxStyle}"
+                             Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
+                             KeyDown="InputTextBox_KeyDown" />
+                    
+                    <!-- Buttons Row -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Clear button on left -->
+                        <Button Grid.Column="0"
+                                Content="🗑️ Clear"
+                                Style="{StaticResource KawaiiSecondaryButtonStyle}"
+                                Command="{Binding ClearHistoryCommand}"/>
+                        
+                        <!-- Send button on right -->
+                        <Button Grid.Column="2"
+                                Content="Send 💕"
+                                Style="{StaticResource KawaiiSendButtonStyle}"
+                                Command="{Binding SendCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Radial Menu Overlay - positioned absolutely via Canvas -->
+        <Canvas x:Name="RadialMenuCanvas" IsHitTestVisible="False">
+            <controls:RadialMenuControl x:Name="RadialMenu"
+                                        DataContext="{Binding RadialMenu}"
+                                        Canvas.Left="{Binding RadialMenu.PositionX}"
+                                        Canvas.Top="{Binding RadialMenu.PositionY}">
+                <controls:RadialMenuControl.RenderTransform>
+                    <TranslateTransform X="-125" Y="-125"/>
+                </controls:RadialMenuControl.RenderTransform>
+            </controls:RadialMenuControl>
+        </Canvas>
     </Grid>
 </Window>
