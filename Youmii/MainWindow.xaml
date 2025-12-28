@@ -240,9 +240,7 @@
         <!-- Radial Menu Overlay - positioned absolutely via Canvas -->
         <Canvas x:Name="RadialMenuCanvas" IsHitTestVisible="False">
             <controls:RadialMenuControl x:Name="RadialMenu"
-                                        DataContext="{Binding RadialMenu}"
-                                        Canvas.Left="{Binding RadialMenu.PositionX}"
-                                        Canvas.Top="{Binding RadialMenu.PositionY}">
+                                        DataContext="{Binding RadialMenu}">
                 <controls:RadialMenuControl.RenderTransform>
                     <TranslateTransform X="-125" Y="-125"/>
                 </controls:RadialMenuControl.RenderTransform>

@@ -100,7 +100,11 @@ namespace Youmii
                 // Get cursor position relative to the window
                 var cursorPosition = e.GetPosition(this);
 
-                // Show radial menu at cursor position
+                // Position the radial menu centered on cursor
+                Canvas.SetLeft(RadialMenu, cursorPosition.X);
+                Canvas.SetTop(RadialMenu, cursorPosition.Y);
+
+                // Show radial menu
                 vm.RadialMenu.ShowAt(cursorPosition.X, cursorPosition.Y);
                 vm.IsCharacterDimmed = true;
                 _isRadialMenuHeld = true;
