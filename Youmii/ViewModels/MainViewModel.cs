@@ -14,7 +14,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly ServiceFactory _serviceFactory;
     private readonly IConversationService _conversationService;
     private readonly IBrainClient _brainClient;
+    private readonly IIdleMessageService _idleMessageService;
     private readonly DispatcherTimer _autoHideTimer;
+    private readonly DispatcherTimer _idleMessageTimer;
     private readonly int _autoHideSeconds;
 
     private string _userInput = string.Empty;
@@ -30,6 +32,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _serviceFactory = new ServiceFactory();
         _conversationService = _serviceFactory.CreateConversationService();
         _brainClient = _serviceFactory.CreateBrainClient();
+        _idleMessageService = new IdleMessageService();
         _autoHideSeconds = _serviceFactory.Settings.BubbleAutoHideSeconds;
 
         _autoHideTimer = new DispatcherTimer
@@ -41,6 +44,11 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             IsBubbleVisible = false;
             _autoHideTimer.Stop();
         };
+
+        // Initialize idle message timer
+        _idleMessageTimer = new DispatcherTimer();
+        _idleMessageTimer.Tick += OnIdleMessageTimerTick;
+        ResetIdleTimer();
 
         // Initialize RadialMenu with service
         var radialMenuService = new RadialMenuService();
@@ -130,6 +138,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     /// </summary>
     public void HandleRadialMenuItemSelected(RadialMenuItem item)
     {
+        ResetIdleTimer();
+        
         // Handle specific menu item actions
         switch (item.Id)
         {
@@ -167,6 +177,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         if (!CanSend) return;
 
+        ResetIdleTimer();
+        
         var input = UserInput.Trim();
         UserInput = string.Empty;
         IsLoading = true;
@@ -202,6 +214,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     private void ToggleInput()
     {
+        ResetIdleTimer();
+        
         IsInputVisible = !IsInputVisible;
         
         if (IsInputVisible)
@@ -222,6 +236,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     private async Task ClearHistoryAsync()
     {
+        ResetIdleTimer();
+        
         await _conversationService.ClearHistoryAsync();
         BubbleText = "Conversation cleared!";
         IsBubbleVisible = true;
@@ -237,9 +253,38 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Resets the idle timer. Call this on any user interaction.
+    /// </summary>
+    public void ResetIdleTimer()
+    {
+        _idleMessageTimer.Stop();
+        _idleMessageTimer.Interval = _idleMessageService.GetRandomInterval();
+        _idleMessageTimer.Start();
+    }
+
+    private void OnIdleMessageTimerTick(object? sender, EventArgs e)
+    {
+        // Don't show idle messages when user is actively interacting
+        if (IsLoading || IsInputVisible)
+        {
+            ResetIdleTimer();
+            return;
+        }
+
+        // Show random idle message
+        BubbleText = _idleMessageService.GetRandomMessage();
+        IsBubbleVisible = true;
+        ResetAutoHideTimer();
+
+        // Schedule next idle message with new random interval
+        ResetIdleTimer();
+    }
+
     public void Dispose()
     {
         _autoHideTimer.Stop();
+        _idleMessageTimer.Stop();
         _serviceFactory.Dispose();
     }
 }
