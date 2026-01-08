@@ -15,7 +15,7 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
-        Topmost="True"
+        Topmost="{Binding AlwaysOnTop}"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
@@ -159,13 +159,18 @@
                     Cursor="Hand"
                     MouseLeftButtonDown="Character_MouseLeftButtonDown"
                     MouseLeftButtonUp="Character_MouseLeftButtonUp"
-                    Background="Transparent">
+                    Background="Transparent"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="{Binding CharacterScale}" ScaleY="{Binding CharacterScale}"/>
+                </Border.RenderTransform>
                 <Grid>
                     <Image x:Name="CharacterImage"
                            Source="/Assets/character.png" 
                            Width="200" 
                            Height="200" 
-                           Stretch="Uniform">
+                           Stretch="Uniform"
+                           Opacity="{Binding CharacterOpacity}">
                         <Image.Effect>
                             <DropShadowEffect Color="#FFE91E63" BlurRadius="20" ShadowDepth="3" Opacity="0.3" />
                         </Image.Effect>

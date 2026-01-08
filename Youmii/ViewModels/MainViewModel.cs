@@ -3,6 +3,7 @@ using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
 using Youmii.Core.Services;
 using Youmii.Infrastructure;
+using Youmii.Views;
 
 namespace Youmii.ViewModels;
 
@@ -14,10 +15,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly ServiceFactory _serviceFactory;
     private readonly IConversationService _conversationService;
     private readonly IBrainClient _brainClient;
-    private readonly IIdleMessageService _idleMessageService;
+    private readonly IdleMessageService _idleMessageService;
+    private readonly SettingsService _settingsService;
     private readonly DispatcherTimer _autoHideTimer;
     private readonly DispatcherTimer _idleMessageTimer;
-    private readonly int _autoHideSeconds;
 
     private string _userInput = string.Empty;
     private string _bubbleText = string.Empty;
@@ -26,6 +27,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private bool _isLoading;
     private bool _isOverlayVisible = true;
     private bool _isCharacterDimmed;
+    private double _characterOpacity = 1.0;
+    private double _characterScale = 1.0;
+    private bool _alwaysOnTop = true;
 
     public MainViewModel()
     {
@@ -33,12 +37,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _conversationService = _serviceFactory.CreateConversationService();
         _brainClient = _serviceFactory.CreateBrainClient();
         _idleMessageService = new IdleMessageService();
-        _autoHideSeconds = _serviceFactory.Settings.BubbleAutoHideSeconds;
+        _settingsService = new SettingsService();
 
-        _autoHideTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(_autoHideSeconds)
-        };
+        _autoHideTimer = new DispatcherTimer();
         _autoHideTimer.Tick += (_, _) =>
         {
             IsBubbleVisible = false;
@@ -48,7 +49,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         // Initialize idle message timer
         _idleMessageTimer = new DispatcherTimer();
         _idleMessageTimer.Tick += OnIdleMessageTimerTick;
-        ResetIdleTimer();
 
         // Initialize RadialMenu with service
         var radialMenuService = new RadialMenuService();
@@ -59,7 +59,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         ToggleOverlayCommand = new RelayCommand(ToggleOverlay);
         ClearHistoryCommand = new AsyncRelayCommand(ClearHistoryAsync);
 
-        // Initialize database
+        // Initialize database and settings
         _ = InitializeAsync();
     }
 
@@ -69,12 +69,44 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public RadialMenuViewModel RadialMenu { get; }
 
     /// <summary>
+    /// Gets the settings service for external access.
+    /// </summary>
+    public ISettingsService SettingsService => _settingsService;
+
+    /// <summary>
     /// Gets or sets whether the character image is dimmed (when radial menu is open).
     /// </summary>
     public bool IsCharacterDimmed
     {
         get => _isCharacterDimmed;
         set => SetProperty(ref _isCharacterDimmed, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the character opacity from settings.
+    /// </summary>
+    public double CharacterOpacity
+    {
+        get => _characterOpacity;
+        set => SetProperty(ref _characterOpacity, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the character scale from settings.
+    /// </summary>
+    public double CharacterScale
+    {
+        get => _characterScale;
+        set => SetProperty(ref _characterScale, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the window should always be on top.
+    /// </summary>
+    public bool AlwaysOnTop
+    {
+        get => _alwaysOnTop;
+        set => SetProperty(ref _alwaysOnTop, value);
     }
 
     public string UserInput
@@ -146,6 +178,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             case "chat":
                 IsInputVisible = true;
                 break;
+            case "settings":
+                OpenSettingsWindow();
+                break;
             // Other menu items are placeholders for now
             default:
                 BubbleText = $"{item.Icon} {item.Label} - Coming soon!";
@@ -155,14 +190,73 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Opens the settings window and applies any changes.
+    /// </summary>
+    private void OpenSettingsWindow()
+    {
+        var settingsVm = new SettingsViewModel(_settingsService);
+        var settingsWindow = new SettingsWindow();
+        settingsWindow.SetViewModel(settingsVm);
+        
+        var result = settingsWindow.ShowDialog();
+        
+        if (result == true)
+        {
+            ApplySettings();
+            BubbleText = "Settings saved! ??";
+        }
+        else
+        {
+            BubbleText = "Settings unchanged~";
+        }
+        
+        IsBubbleVisible = true;
+        ResetAutoHideTimer();
+    }
+
+    /// <summary>
+    /// Applies current settings to all relevant services and properties.
+    /// </summary>
+    private void ApplySettings()
+    {
+        var settings = _settingsService.CurrentSettings;
+        
+        // Update idle message service
+        _idleMessageService.Configure(
+            settings.IdleMinIntervalSeconds,
+            settings.IdleMaxIntervalSeconds,
+            settings.IdleMessagesEnabled
+        );
+        
+        // Update auto-hide timer
+        _autoHideTimer.Interval = TimeSpan.FromSeconds(settings.BubbleDisplaySeconds);
+        
+        // Update visual properties
+        CharacterOpacity = settings.CharacterOpacity;
+        CharacterScale = settings.CharacterScale;
+        AlwaysOnTop = settings.AlwaysOnTop;
+        
+        // Reset idle timer with new settings
+        ResetIdleTimer();
+    }
+
     private async Task InitializeAsync()
     {
         try
         {
+            // Load settings first
+            await _settingsService.LoadAsync();
+            ApplySettings();
+            
             await _serviceFactory.InitializeAsync();
             
-            // Show welcome message
-            BubbleText = "Hello! Hold click on me for options!";
+            // Start idle timer
+            ResetIdleTimer();
+            
+            // Show welcome message with character name
+            var name = _settingsService.CurrentSettings.CharacterName;
+            BubbleText = $"Hello! I'm {name}! Hold click on me for options!";
             IsBubbleVisible = true;
             ResetAutoHideTimer();
         }
@@ -259,14 +353,18 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public void ResetIdleTimer()
     {
         _idleMessageTimer.Stop();
-        _idleMessageTimer.Interval = _idleMessageService.GetRandomInterval();
-        _idleMessageTimer.Start();
+        
+        if (_idleMessageService.IsEnabled)
+        {
+            _idleMessageTimer.Interval = _idleMessageService.GetRandomInterval();
+            _idleMessageTimer.Start();
+        }
     }
 
     private void OnIdleMessageTimerTick(object? sender, EventArgs e)
     {
-        // Don't show idle messages when user is actively interacting
-        if (IsLoading || IsInputVisible)
+        // Don't show idle messages when user is actively interacting or if disabled
+        if (IsLoading || IsInputVisible || !_idleMessageService.IsEnabled)
         {
             ResetIdleTimer();
             return;

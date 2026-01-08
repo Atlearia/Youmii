@@ -1,0 +1,523 @@
+﻿<Window x:Class="Youmii.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="✨ Settings"
+        Width="420"
+        Height="580"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
+
+    <Window.Resources>
+        <!-- Gradient Background -->
+        <LinearGradientBrush x:Key="SettingsBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFCE4EC" Offset="0"/>
+            <GradientStop Color="#FFF3E5F5" Offset="0.3"/>
+            <GradientStop Color="#FFE8EAF6" Offset="0.6"/>
+            <GradientStop Color="#FFEDE7F6" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Section Header Style -->
+        <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,15,0,8"/>
+            <Setter Property="Foreground">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#FFE91E63" Offset="0"/>
+                        <GradientStop Color="#FF9C27B0" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Settings Label Style -->
+        <Style x:Key="SettingsLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#FF424242"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Kawaii Toggle Switch Style -->
+        <Style x:Key="KawaiiToggleStyle" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Border x:Name="track"
+                                    Width="44" Height="24"
+                                    CornerRadius="12"
+                                    Background="#FFE0E0E0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#80000000" BlurRadius="2" ShadowDepth="1" Opacity="0.2"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border x:Name="thumb"
+                                    Width="20" Height="20"
+                                    CornerRadius="10"
+                                    Background="White"
+                                    HorizontalAlignment="Left"
+                                    Margin="2,0,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#80000000" BlurRadius="3" ShadowDepth="1" Opacity="0.3"/>
+                                </Border.Effect>
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="thumbTransform" X="0"/>
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="track" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#FFE91E63" Offset="0"/>
+                                            <GradientStop Color="#FF9C27B0" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="thumbTransform"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="20" Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="thumbTransform"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Kawaii Slider Style -->
+        <Style x:Key="KawaiiSliderStyle" TargetType="Slider">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Border x:Name="track"
+                                    Height="6"
+                                    CornerRadius="3"
+                                    Background="#FFE0E0E0"
+                                    VerticalAlignment="Center"/>
+                            <Border x:Name="trackFill"
+                                    Height="6"
+                                    CornerRadius="3"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#FFE91E63" Offset="0"/>
+                                        <GradientStop Color="#FF9C27B0" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb Cursor="Hand">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Grid>
+                                                    <Ellipse Width="18" Height="18" Fill="White">
+                                                        <Ellipse.Effect>
+                                                            <DropShadowEffect Color="#FFE91E63" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
+                                                        </Ellipse.Effect>
+                                                    </Ellipse>
+                                                    <Ellipse Width="10" Height="10">
+                                                        <Ellipse.Fill>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                <GradientStop Color="#FFE91E63" Offset="0"/>
+                                                                <GradientStop Color="#FF9C27B0" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Ellipse.Fill>
+                                                    </Ellipse>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Kawaii TextBox Style for Settings -->
+        <Style x:Key="SettingsTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFF8BBD9"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#FF424242"/>
+            <Setter Property="CaretBrush" Value="#FFE91E63"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Margin="4,0" 
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#FFE91E63" BlurRadius="6" ShadowDepth="0" Opacity="0.3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Kawaii Primary Button Style -->
+        <Style x:Key="SettingsPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#FFE91E63" Offset="0"/>
+                                    <GradientStop Color="#FF9C27B0" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#FFE91E63" BlurRadius="8" ShadowDepth="2" Opacity="0.3"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#FFE91E63" BlurRadius="12" ShadowDepth="3" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#FFD81B60" Offset="0"/>
+                                            <GradientStop Color="#FF7B1FA2" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#FFBDBDBD"/>
+                                <Setter TargetName="border" Property="Effect" Value="{x:Null}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Kawaii Secondary Button Style -->
+        <Style x:Key="SettingsSecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#FFE91E63"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                CornerRadius="12" 
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                BorderBrush="#FFF8BBD9"
+                                BorderThickness="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFFCE4EC"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFF8BBD9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Main Container with shadow -->
+    <Border CornerRadius="20" Background="{StaticResource SettingsBackgroundGradient}" 
+            BorderBrush="#FFF8BBD9" BorderThickness="2">
+        <Border.Effect>
+            <DropShadowEffect Color="#80E91E63" BlurRadius="25" ShadowDepth="5" Opacity="0.3"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar -->
+            <Grid Grid.Row="0" Margin="20,15,20,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="⚙️" FontSize="20" Margin="0,0,8,0"/>
+                    <TextBlock Text="Settings" FontSize="18" FontWeight="Bold">
+                        <TextBlock.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#FFE91E63" Offset="0"/>
+                                <GradientStop Color="#FF9C27B0" Offset="1"/>
+                            </LinearGradientBrush>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Close Button -->
+                <Button Grid.Column="1" Width="28" Height="28" 
+                        Click="CloseButton_Click" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Ellipse x:Name="bg" Fill="Transparent"/>
+                                <TextBlock Text="✕" FontSize="12" Foreground="#FF757575"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Fill" Value="#20E91E63"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <!-- Scrollable Content -->
+            <ScrollViewer Grid.Row="1" Margin="20,10,20,10" 
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    
+                    <!-- Character Section -->
+                    <TextBlock Text="💕 Character" Style="{StaticResource SectionHeaderStyle}"/>
+                    
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Name" Style="{StaticResource SettingsLabelStyle}" 
+                                   Margin="0,0,15,0"/>
+                        <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBoxStyle}"
+                                 Text="{Binding CharacterName, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Grid>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Size" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding CharacterScalePercent, StringFormat={}{0}%}" 
+                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="0.5" Maximum="2.0" 
+                                Value="{Binding CharacterScale}"
+                                TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Opacity" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding CharacterOpacityPercent, StringFormat={}{0}%}" 
+                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="0.3" Maximum="1.0" 
+                                Value="{Binding CharacterOpacity}"
+                                TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <!-- Behavior Section -->
+                    <TextBlock Text="🎀 Behavior" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Idle messages" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding IdleMessagesEnabled}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,8" IsEnabled="{Binding IdleMessagesEnabled}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Min idle time" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding IdleMinIntervalSeconds, StringFormat={}{0} seconds}" 
+                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="10" Maximum="300" 
+                                Value="{Binding IdleMinIntervalSeconds}"
+                                TickFrequency="10" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,8" IsEnabled="{Binding IdleMessagesEnabled}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Max idle time" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding IdleMaxIntervalSeconds, StringFormat={}{0} seconds}" 
+                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="10" Maximum="600" 
+                                Value="{Binding IdleMaxIntervalSeconds}"
+                                TickFrequency="10" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Bubble display time" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding BubbleDisplaySeconds, StringFormat={}{0} seconds}" 
+                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="3" Maximum="30" 
+                                Value="{Binding BubbleDisplaySeconds}"
+                                TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <!-- System Section -->
+                    <TextBlock Text="⭐ System" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Always on top" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding AlwaysOnTop}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Sound effects" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding SoundEffectsEnabled}"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Start with Windows" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding StartWithWindows}"/>
+                    </Grid>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Bottom Buttons -->
+            <Grid Grid.Row="2" Margin="20,10,20,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="🔄 Reset" 
+                        Style="{StaticResource SettingsSecondaryButtonStyle}"
+                        Command="{Binding ResetToDefaultsCommand}"/>
+
+                <Button Grid.Column="2" Content="Cancel" 
+                        Style="{StaticResource SettingsSecondaryButtonStyle}"
+                        Command="{Binding CancelCommand}"
+                        Margin="0,0,10,0"/>
+
+                <Button Grid.Column="3" Content="Save 💕" 
+                        Style="{StaticResource SettingsPrimaryButtonStyle}"
+                        Command="{Binding SaveCommand}"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
