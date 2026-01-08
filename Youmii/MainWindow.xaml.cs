@@ -97,6 +97,9 @@ namespace Youmii
         {
             if (DataContext is MainViewModel vm)
             {
+                // Reset idle timer on character interaction
+                vm.ResetIdleTimer();
+                
                 // Get cursor position relative to the window
                 var cursorPosition = e.GetPosition(this);
 
