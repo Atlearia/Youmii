@@ -83,13 +83,28 @@ namespace Youmii
 
         private void AnimateCharacterDim(bool isDimmed)
         {
+            if (DataContext is not MainViewModel vm)
+                return;
+                
             if (isDimmed)
             {
                 _characterDimIn?.Begin(CharacterImage);
             }
             else
             {
-                _characterDimOut?.Begin(CharacterImage);
+                // Get the target opacity from settings
+                var targetOpacity = vm.CharacterOpacity;
+                
+                // Configure the animation to animate back to the settings opacity
+                if (_characterDimOut != null)
+                {
+                    var animation = _characterDimOut.Children[0] as DoubleAnimation;
+                    if (animation != null)
+                    {
+                        animation.To = targetOpacity;
+                    }
+                    _characterDimOut.Begin(CharacterImage);
+                }
             }
         }
 

@@ -2,23 +2,24 @@ using System.Windows.Threading;
 using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
 using Youmii.Core.Services;
+using Youmii.Features.Chat.Services;
+using Youmii.Features.IdleMessages.Services;
+using Youmii.Features.Settings.Services;
 using Youmii.Infrastructure;
-using Youmii.Views;
 
 namespace Youmii.ViewModels;
 
 /// <summary>
 /// Main ViewModel for the overlay window.
+/// Coordinates between feature modules and manages UI state.
 /// </summary>
 public sealed class MainViewModel : ViewModelBase, IDisposable
 {
     private readonly ServiceFactory _serviceFactory;
-    private readonly IConversationService _conversationService;
-    private readonly IBrainClient _brainClient;
-    private readonly IdleMessageService _idleMessageService;
-    private readonly SettingsService _settingsService;
+    private readonly SettingsCoordinator _settingsCoordinator;
+    private readonly ChatCoordinator _chatCoordinator;
+    private readonly IdleMessageCoordinator _idleMessageCoordinator;
     private readonly DispatcherTimer _autoHideTimer;
-    private readonly DispatcherTimer _idleMessageTimer;
 
     private string _userInput = string.Empty;
     private string _bubbleText = string.Empty;
@@ -33,35 +34,43 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public MainViewModel()
     {
+        // Initialize infrastructure
         _serviceFactory = new ServiceFactory();
-        _conversationService = _serviceFactory.CreateConversationService();
-        _brainClient = _serviceFactory.CreateBrainClient();
-        _idleMessageService = new IdleMessageService();
-        _settingsService = new SettingsService();
+        
+        // Initialize feature coordinators
+        _settingsCoordinator = new SettingsCoordinator();
+        _chatCoordinator = new ChatCoordinator(
+            _serviceFactory.CreateConversationService(),
+            _serviceFactory.CreateBrainClient()
+        );
+        _idleMessageCoordinator = new IdleMessageCoordinator();
 
+        // Subscribe to coordinator events
+        _settingsCoordinator.SettingsApplied += OnSettingsApplied;
+        _chatCoordinator.MessageSending += OnMessageSending;
+        _chatCoordinator.MessageReceived += OnMessageReceived;
+        _chatCoordinator.MessageFailed += OnMessageFailed;
+        _idleMessageCoordinator.IdleMessageTriggered += OnIdleMessageTriggered;
+
+        // Initialize auto-hide timer for bubble
         _autoHideTimer = new DispatcherTimer();
-        _autoHideTimer.Tick += (_, _) =>
-        {
-            IsBubbleVisible = false;
-            _autoHideTimer.Stop();
-        };
+        _autoHideTimer.Tick += OnAutoHideTimerTick;
 
-        // Initialize idle message timer
-        _idleMessageTimer = new DispatcherTimer();
-        _idleMessageTimer.Tick += OnIdleMessageTimerTick;
-
-        // Initialize RadialMenu with service
+        // Initialize RadialMenu
         var radialMenuService = new RadialMenuService();
         RadialMenu = new RadialMenuViewModel(radialMenuService);
 
+        // Initialize commands
         SendCommand = new AsyncRelayCommand(SendMessageAsync, () => CanSend);
         ToggleInputCommand = new RelayCommand(ToggleInput);
         ToggleOverlayCommand = new RelayCommand(ToggleOverlay);
         ClearHistoryCommand = new AsyncRelayCommand(ClearHistoryAsync);
 
-        // Initialize database and settings
+        // Initialize asynchronously
         _ = InitializeAsync();
     }
+
+    #region Properties
 
     /// <summary>
     /// Gets the radial menu ViewModel.
@@ -69,9 +78,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public RadialMenuViewModel RadialMenu { get; }
 
     /// <summary>
-    /// Gets the settings service for external access.
+    /// Gets the settings service for external access (used by MainWindow for animations).
     /// </summary>
-    public ISettingsService SettingsService => _settingsService;
+    public ISettingsService SettingsService => _settingsCoordinator.SettingsService;
 
     /// <summary>
     /// Gets or sets whether the character image is dimmed (when radial menu is open).
@@ -136,7 +145,14 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public bool IsInputVisible
     {
         get => _isInputVisible;
-        set => SetProperty(ref _isInputVisible, value);
+        set
+        {
+            if (SetProperty(ref _isInputVisible, value))
+            {
+                // Pause idle messages when input is visible
+                _idleMessageCoordinator.IsPaused = value || IsLoading;
+            }
+        }
     }
 
     public bool IsLoading
@@ -147,6 +163,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             if (SetProperty(ref _isLoading, value))
             {
                 ((AsyncRelayCommand)SendCommand).RaiseCanExecuteChanged();
+                // Pause idle messages when loading
+                _idleMessageCoordinator.IsPaused = value || IsInputVisible;
             }
         }
     }
@@ -159,113 +177,109 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public bool CanSend => !string.IsNullOrWhiteSpace(UserInput) && !IsLoading;
 
+    #endregion
+
+    #region Commands
+
     public AsyncRelayCommand SendCommand { get; }
     public RelayCommand ToggleInputCommand { get; }
     public RelayCommand ToggleOverlayCommand { get; }
     public AsyncRelayCommand ClearHistoryCommand { get; }
 
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// Handles when a radial menu item is selected.
-    /// Called from MainWindow after the item selection event.
     /// </summary>
     public void HandleRadialMenuItemSelected(RadialMenuItem item)
     {
         ResetIdleTimer();
         
-        // Handle specific menu item actions
         switch (item.Id)
         {
             case "chat":
                 IsInputVisible = true;
                 break;
             case "settings":
-                OpenSettingsWindow();
+                OpenSettings();
                 break;
-            // Other menu items are placeholders for now
             default:
-                BubbleText = $"{item.Icon} {item.Label} - Coming soon!";
-                IsBubbleVisible = true;
-                ResetAutoHideTimer();
+                ShowBubble($"{item.Icon} {item.Label} - Coming soon!");
                 break;
         }
     }
 
     /// <summary>
-    /// Opens the settings window and applies any changes.
+    /// Resets the idle timer. Call this on any user interaction.
     /// </summary>
-    private void OpenSettingsWindow()
+    public void ResetIdleTimer()
     {
-        var settingsVm = new SettingsViewModel(_settingsService);
-        var settingsWindow = new SettingsWindow();
-        settingsWindow.SetViewModel(settingsVm);
-        
-        var result = settingsWindow.ShowDialog();
-        
-        if (result == true)
-        {
-            ApplySettings();
-            BubbleText = "Settings saved! ??";
-        }
-        else
-        {
-            BubbleText = "Settings unchanged~";
-        }
-        
-        IsBubbleVisible = true;
-        ResetAutoHideTimer();
+        _idleMessageCoordinator.ResetTimer();
     }
 
-    /// <summary>
-    /// Applies current settings to all relevant services and properties.
-    /// </summary>
-    private void ApplySettings()
+    #endregion
+
+    #region Private Methods - Initialization
+
+    private async Task InitializeAsync()
     {
-        var settings = _settingsService.CurrentSettings;
+        try
+        {
+            // Load and apply settings
+            await _settingsCoordinator.LoadSettingsAsync();
+            _settingsCoordinator.ApplySettings();
+            
+            // Initialize database
+            await _serviceFactory.InitializeAsync();
+            
+            // Start idle messages
+            _idleMessageCoordinator.Start();
+            
+            // Show welcome message
+            var name = _settingsCoordinator.CurrentSettings.CharacterName;
+            ShowBubble($"Hello! I'm {name}! Hold click on me for options!");
+        }
+        catch (Exception ex)
+        {
+            ShowBubble($"Error initializing: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Private Methods - Settings
+
+    private void OpenSettings()
+    {
+        var saved = _settingsCoordinator.OpenSettingsDialog();
+        ShowBubble(saved ? "Settings saved! ??" : "Settings unchanged~");
+    }
+
+    private void OnSettingsApplied(object? sender, SettingsAppliedEventArgs e)
+    {
+        var settings = e.Settings;
         
-        // Update idle message service
-        _idleMessageService.Configure(
+        // Update idle message coordinator
+        _idleMessageCoordinator.Configure(
             settings.IdleMinIntervalSeconds,
             settings.IdleMaxIntervalSeconds,
             settings.IdleMessagesEnabled
         );
         
-        // Update auto-hide timer
+        // Update auto-hide timer interval
         _autoHideTimer.Interval = TimeSpan.FromSeconds(settings.BubbleDisplaySeconds);
         
         // Update visual properties
         CharacterOpacity = settings.CharacterOpacity;
         CharacterScale = settings.CharacterScale;
         AlwaysOnTop = settings.AlwaysOnTop;
-        
-        // Reset idle timer with new settings
-        ResetIdleTimer();
     }
 
-    private async Task InitializeAsync()
-    {
-        try
-        {
-            // Load settings first
-            await _settingsService.LoadAsync();
-            ApplySettings();
-            
-            await _serviceFactory.InitializeAsync();
-            
-            // Start idle timer
-            ResetIdleTimer();
-            
-            // Show welcome message with character name
-            var name = _settingsService.CurrentSettings.CharacterName;
-            BubbleText = $"Hello! I'm {name}! Hold click on me for options!";
-            IsBubbleVisible = true;
-            ResetAutoHideTimer();
-        }
-        catch (Exception ex)
-        {
-            BubbleText = $"Error initializing: {ex.Message}";
-            IsBubbleVisible = true;
-        }
-    }
+    #endregion
+
+    #region Private Methods - Chat
 
     private async Task SendMessageAsync()
     {
@@ -275,46 +289,46 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         
         var input = UserInput.Trim();
         UserInput = string.Empty;
-        IsLoading = true;
 
-        try
-        {
-            // Prepare request (saves user message, extracts facts)
-            var result = await _conversationService.PrepareRequestAsync(input);
-
-            // Show "thinking" state
-            BubbleText = "...";
-            IsBubbleVisible = true;
-
-            // Send to brain
-            var response = await _brainClient.SendMessageAsync(result.Request);
-
-            // Save response
-            await _conversationService.SaveResponseAsync(response.Reply);
-
-            // Display reply
-            BubbleText = response.Reply;
-            ResetAutoHideTimer();
-        }
-        catch (Exception ex)
-        {
-            BubbleText = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        await _chatCoordinator.SendMessageAsync(input);
     }
+
+    private void OnMessageSending(object? sender, EventArgs e)
+    {
+        IsLoading = true;
+        ShowBubble("...");
+    }
+
+    private void OnMessageReceived(object? sender, ChatResponseEventArgs e)
+    {
+        IsLoading = false;
+        ShowBubble(e.Response);
+    }
+
+    private void OnMessageFailed(object? sender, ChatErrorEventArgs e)
+    {
+        IsLoading = false;
+        ShowBubble($"Error: {e.ErrorMessage}");
+    }
+
+    private async Task ClearHistoryAsync()
+    {
+        ResetIdleTimer();
+        await _chatCoordinator.ClearHistoryAsync();
+        ShowBubble("Conversation cleared!");
+    }
+
+    #endregion
+
+    #region Private Methods - UI
 
     private void ToggleInput()
     {
         ResetIdleTimer();
-        
         IsInputVisible = !IsInputVisible;
         
         if (IsInputVisible)
         {
-            // Stop auto-hide while input is open
             _autoHideTimer.Stop();
         }
         else if (IsBubbleVisible)
@@ -328,12 +342,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         IsOverlayVisible = !IsOverlayVisible;
     }
 
-    private async Task ClearHistoryAsync()
+    private void ShowBubble(string text)
     {
-        ResetIdleTimer();
-        
-        await _conversationService.ClearHistoryAsync();
-        BubbleText = "Conversation cleared!";
+        BubbleText = text;
         IsBubbleVisible = true;
         ResetAutoHideTimer();
     }
@@ -347,42 +358,38 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    /// <summary>
-    /// Resets the idle timer. Call this on any user interaction.
-    /// </summary>
-    public void ResetIdleTimer()
+    private void OnAutoHideTimerTick(object? sender, EventArgs e)
     {
-        _idleMessageTimer.Stop();
-        
-        if (_idleMessageService.IsEnabled)
-        {
-            _idleMessageTimer.Interval = _idleMessageService.GetRandomInterval();
-            _idleMessageTimer.Start();
-        }
+        IsBubbleVisible = false;
+        _autoHideTimer.Stop();
     }
 
-    private void OnIdleMessageTimerTick(object? sender, EventArgs e)
+    private void OnIdleMessageTriggered(object? sender, IdleMessageEventArgs e)
     {
-        // Don't show idle messages when user is actively interacting or if disabled
-        if (IsLoading || IsInputVisible || !_idleMessageService.IsEnabled)
-        {
-            ResetIdleTimer();
-            return;
-        }
-
-        // Show random idle message
-        BubbleText = _idleMessageService.GetRandomMessage();
-        IsBubbleVisible = true;
-        ResetAutoHideTimer();
-
-        // Schedule next idle message with new random interval
-        ResetIdleTimer();
+        ShowBubble(e.Message);
     }
+
+    #endregion
+
+    #region IDisposable
 
     public void Dispose()
     {
+        // Unsubscribe from events
+        _settingsCoordinator.SettingsApplied -= OnSettingsApplied;
+        _chatCoordinator.MessageSending -= OnMessageSending;
+        _chatCoordinator.MessageReceived -= OnMessageReceived;
+        _chatCoordinator.MessageFailed -= OnMessageFailed;
+        _idleMessageCoordinator.IdleMessageTriggered -= OnIdleMessageTriggered;
+
+        // Stop timers
         _autoHideTimer.Stop();
-        _idleMessageTimer.Stop();
+
+        // Dispose coordinators
+        _settingsCoordinator.Dispose();
+        _idleMessageCoordinator.Dispose();
         _serviceFactory.Dispose();
     }
+
+    #endregion
 }

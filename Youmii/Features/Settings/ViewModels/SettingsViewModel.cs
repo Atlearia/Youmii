@@ -1,8 +1,9 @@
 using System.Windows.Input;
 using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
+using Youmii.ViewModels;
 
-namespace Youmii.ViewModels;
+namespace Youmii.Features.Settings.ViewModels;
 
 /// <summary>
 /// ViewModel for the Settings window.
