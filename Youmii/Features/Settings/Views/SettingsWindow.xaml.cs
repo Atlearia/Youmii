@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Input;
-using Youmii.ViewModels;
+using Youmii.Features.Settings.ViewModels;
 
-namespace Youmii.Views;
+namespace Youmii.Features.Settings.Views;
 
 /// <summary>
 /// Interaction logic for SettingsWindow.xaml
