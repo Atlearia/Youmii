@@ -85,4 +85,60 @@ public interface IUserSettings
     /// Gets or sets the character scale (0.5 to 2.0).
     /// </summary>
     double CharacterScale { get; set; }
+
+    // New Personality Settings
+
+    /// <summary>
+    /// Gets or sets the character's personality type (e.g., "cheerful", "shy", "energetic", "calm").
+    /// </summary>
+    string PersonalityType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the character's speech style (e.g., "casual", "formal", "cute", "playful").
+    /// </summary>
+    string SpeechStyle { get; set; }
+
+    /// <summary>
+    /// Gets or sets the chattiness level (0-100, how often character initiates conversation).
+    /// </summary>
+    int ChattinessLevel { get; set; }
+
+    // New Theme Settings
+
+    /// <summary>
+    /// Gets or sets the accent color for UI elements (hex color string).
+    /// </summary>
+    string AccentColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bubble style (e.g., "round", "cloud", "pixel", "minimal").
+    /// </summary>
+    string BubbleStyle { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether dark mode is enabled.
+    /// </summary>
+    bool DarkModeEnabled { get; set; }
+
+    // New Effects Settings
+
+    /// <summary>
+    /// Gets or sets whether bounce animation is enabled when character speaks.
+    /// </summary>
+    bool BounceAnimationEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether sparkle effects are enabled.
+    /// </summary>
+    bool SparkleEffectsEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether typing animation is shown in bubble.
+    /// </summary>
+    bool TypingAnimationEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the animation speed multiplier (0.5 to 2.0).
+    /// </summary>
+    double AnimationSpeed { get; set; }
 }

@@ -37,6 +37,42 @@ public sealed class UserSettings : IUserSettings
     /// <inheritdoc />
     public double CharacterScale { get; set; } = 1.0;
 
+    // New Personality Settings
+
+    /// <inheritdoc />
+    public string PersonalityType { get; set; } = "cheerful";
+
+    /// <inheritdoc />
+    public string SpeechStyle { get; set; } = "cute";
+
+    /// <inheritdoc />
+    public int ChattinessLevel { get; set; } = 50;
+
+    // New Theme Settings
+
+    /// <inheritdoc />
+    public string AccentColor { get; set; } = "#FFE91E63";
+
+    /// <inheritdoc />
+    public string BubbleStyle { get; set; } = "round";
+
+    /// <inheritdoc />
+    public bool DarkModeEnabled { get; set; } = false;
+
+    // New Effects Settings
+
+    /// <inheritdoc />
+    public bool BounceAnimationEnabled { get; set; } = true;
+
+    /// <inheritdoc />
+    public bool SparkleEffectsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
+    public bool TypingAnimationEnabled { get; set; } = true;
+
+    /// <inheritdoc />
+    public double AnimationSpeed { get; set; } = 1.0;
+
     /// <summary>
     /// Creates a deep copy of the settings.
     /// </summary>
@@ -53,7 +89,18 @@ public sealed class UserSettings : IUserSettings
             CharacterOpacity = CharacterOpacity,
             SoundEffectsEnabled = SoundEffectsEnabled,
             StartWithWindows = StartWithWindows,
-            CharacterScale = CharacterScale
+            CharacterScale = CharacterScale,
+            // New properties
+            PersonalityType = PersonalityType,
+            SpeechStyle = SpeechStyle,
+            ChattinessLevel = ChattinessLevel,
+            AccentColor = AccentColor,
+            BubbleStyle = BubbleStyle,
+            DarkModeEnabled = DarkModeEnabled,
+            BounceAnimationEnabled = BounceAnimationEnabled,
+            SparkleEffectsEnabled = SparkleEffectsEnabled,
+            TypingAnimationEnabled = TypingAnimationEnabled,
+            AnimationSpeed = AnimationSpeed
         };
     }
 
@@ -72,6 +119,17 @@ public sealed class UserSettings : IUserSettings
         SoundEffectsEnabled = other.SoundEffectsEnabled;
         StartWithWindows = other.StartWithWindows;
         CharacterScale = other.CharacterScale;
+        // New properties
+        PersonalityType = other.PersonalityType;
+        SpeechStyle = other.SpeechStyle;
+        ChattinessLevel = other.ChattinessLevel;
+        AccentColor = other.AccentColor;
+        BubbleStyle = other.BubbleStyle;
+        DarkModeEnabled = other.DarkModeEnabled;
+        BounceAnimationEnabled = other.BounceAnimationEnabled;
+        SparkleEffectsEnabled = other.SparkleEffectsEnabled;
+        TypingAnimationEnabled = other.TypingAnimationEnabled;
+        AnimationSpeed = other.AnimationSpeed;
     }
 
     /// <summary>
@@ -89,5 +147,16 @@ public sealed class UserSettings : IUserSettings
         SoundEffectsEnabled = true;
         StartWithWindows = false;
         CharacterScale = 1.0;
+        // New properties
+        PersonalityType = "cheerful";
+        SpeechStyle = "cute";
+        ChattinessLevel = 50;
+        AccentColor = "#FFE91E63";
+        BubbleStyle = "round";
+        DarkModeEnabled = false;
+        BounceAnimationEnabled = true;
+        SparkleEffectsEnabled = true;
+        TypingAnimationEnabled = true;
+        AnimationSpeed = 1.0;
     }
 }

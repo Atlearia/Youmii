@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="? Settings"
-        Width="420"
-        Height="580"
+        Width="440"
+        Height="700"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -43,6 +43,13 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="#FF424242"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Sub Label Style -->
+        <Style x:Key="SubLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#FF9E9E9E"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
         </Style>
 
         <!-- Kawaii Toggle Switch Style -->
@@ -211,6 +218,121 @@
             </Setter>
         </Style>
 
+        <!-- Kawaii ComboBox Style -->
+        <Style x:Key="KawaiiComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFF8BBD9"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#FF424242"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      Margin="10,6"
+                                                      VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="?" 
+                                               FontSize="10" Foreground="#FFE91E63"
+                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup" 
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   PopupAnimation="Slide">
+                                <Border Background="White" 
+                                        BorderBrush="#FFF8BBD9" 
+                                        BorderThickness="2"
+                                        CornerRadius="10"
+                                        Margin="0,2,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#80E91E63" BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                                    </Border.Effect>
+                                    <ScrollViewer MaxHeight="200">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                            <ToggleButton x:Name="toggleButton"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Focusable="False"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent"/>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Color Picker Button Style -->
+        <Style x:Key="ColorPickerButtonStyle" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <Ellipse x:Name="colorCircle" 
+                                     Width="28" Height="28"
+                                     Fill="{TemplateBinding Tag}"
+                                     Stroke="#FFF8BBD9"
+                                     StrokeThickness="2"/>
+                            <Ellipse x:Name="checkMark"
+                                     Width="12" Height="12"
+                                     Fill="White"
+                                     Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="colorCircle" Property="Stroke" Value="White"/>
+                                <Setter TargetName="colorCircle" Property="StrokeThickness" Value="3"/>
+                                <Setter TargetName="checkMark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="colorCircle" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#80000000" BlurRadius="6" ShadowDepth="2" Opacity="0.3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="colorCircle" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#80000000" BlurRadius="8" ShadowDepth="2" Opacity="0.4"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Kawaii Primary Button Style -->
         <Style x:Key="SettingsPrimaryButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="20,10"/>
@@ -354,7 +476,7 @@
                 <StackPanel>
                     
                     <!-- Character Section -->
-                    <TextBlock Text="?? Character" Style="{StaticResource SectionHeaderStyle}"/>
+                    <TextBlock Text="Character" Style="{StaticResource SectionHeaderStyle}"/>
                     
                     <Grid Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
@@ -375,7 +497,7 @@
                         <StackPanel>
                             <TextBlock Text="Size" Style="{StaticResource SettingsLabelStyle}"/>
                             <TextBlock Text="{Binding CharacterScalePercent, StringFormat={}{0}%}" 
-                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                                       Style="{StaticResource SubLabelStyle}"/>
                         </StackPanel>
                         <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
                                 Minimum="0.5" Maximum="2.0" 
@@ -391,7 +513,7 @@
                         <StackPanel>
                             <TextBlock Text="Opacity" Style="{StaticResource SettingsLabelStyle}"/>
                             <TextBlock Text="{Binding CharacterOpacityPercent, StringFormat={}{0}%}" 
-                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                                       Style="{StaticResource SubLabelStyle}"/>
                         </StackPanel>
                         <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
                                 Minimum="0.3" Maximum="1.0" 
@@ -399,8 +521,153 @@
                                 TickFrequency="0.1" IsSnapToTickEnabled="True"/>
                     </Grid>
 
+                    <!-- Personality Section (NEW) -->
+                    <TextBlock Text="Personality" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Mood" Style="{StaticResource SettingsLabelStyle}"/>
+                        <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                  ItemsSource="{Binding PersonalityTypes}"
+                                  SelectedValue="{Binding PersonalityType}"
+                                  SelectedValuePath="Value"
+                                  DisplayMemberPath="DisplayName"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Speech style" Style="{StaticResource SettingsLabelStyle}"/>
+                        <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                  ItemsSource="{Binding SpeechStyles}"
+                                  SelectedValue="{Binding SpeechStyle}"
+                                  SelectedValuePath="Value"
+                                  DisplayMemberPath="DisplayName"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Chattiness" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding ChattinessDescription}" 
+                                       Style="{StaticResource SubLabelStyle}"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="0" Maximum="100" 
+                                Value="{Binding ChattinessLevel}"
+                                TickFrequency="10" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
+                    <!-- Theme Section (NEW) -->
+                    <TextBlock Text="Theme" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Accent color" Style="{StaticResource SettingsLabelStyle}"/>
+                        <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                  ItemsSource="{Binding AccentColors}"
+                                  SelectedValue="{Binding AccentColor}"
+                                  SelectedValuePath="HexColor">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="16" Height="16" Margin="0,0,8,0">
+                                            <Ellipse.Fill>
+                                                <SolidColorBrush Color="{Binding HexColor}"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Bubble style" Style="{StaticResource SettingsLabelStyle}"/>
+                        <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                  ItemsSource="{Binding BubbleStyles}"
+                                  SelectedValue="{Binding BubbleStyle}"
+                                  SelectedValuePath="Value"
+                                  DisplayMemberPath="DisplayName"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Dark mode" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding DarkModeEnabled}"/>
+                    </Grid>
+
+                    <!-- Effects Section (NEW) -->
+                    <TextBlock Text="Effects" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Bounce animation" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding BounceAnimationEnabled}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Sparkle effects" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding SparkleEffectsEnabled}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Typing animation" Style="{StaticResource SettingsLabelStyle}"/>
+                        <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
+                                  IsChecked="{Binding TypingAnimationEnabled}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Animation speed" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="{Binding AnimationSpeedDescription}" 
+                                       Style="{StaticResource SubLabelStyle}"/>
+                        </StackPanel>
+                        <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
+                                Minimum="0.5" Maximum="2.0" 
+                                Value="{Binding AnimationSpeed}"
+                                TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                    </Grid>
+
                     <!-- Behavior Section -->
-                    <TextBlock Text="?? Behavior" Style="{StaticResource SectionHeaderStyle}"/>
+                    <TextBlock Text="Behavior" Style="{StaticResource SectionHeaderStyle}"/>
 
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -420,7 +687,7 @@
                         <StackPanel>
                             <TextBlock Text="Min idle time" Style="{StaticResource SettingsLabelStyle}"/>
                             <TextBlock Text="{Binding IdleMinIntervalSeconds, StringFormat={}{0} seconds}" 
-                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                                       Style="{StaticResource SubLabelStyle}"/>
                         </StackPanel>
                         <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
                                 Minimum="10" Maximum="300" 
@@ -436,7 +703,7 @@
                         <StackPanel>
                             <TextBlock Text="Max idle time" Style="{StaticResource SettingsLabelStyle}"/>
                             <TextBlock Text="{Binding IdleMaxIntervalSeconds, StringFormat={}{0} seconds}" 
-                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                                       Style="{StaticResource SubLabelStyle}"/>
                         </StackPanel>
                         <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
                                 Minimum="10" Maximum="600" 
@@ -452,7 +719,7 @@
                         <StackPanel>
                             <TextBlock Text="Bubble display time" Style="{StaticResource SettingsLabelStyle}"/>
                             <TextBlock Text="{Binding BubbleDisplaySeconds, StringFormat={}{0} seconds}" 
-                                       FontSize="11" Foreground="#FF9E9E9E" Margin="0,2,0,0"/>
+                                       Style="{StaticResource SubLabelStyle}"/>
                         </StackPanel>
                         <Slider Grid.Column="1" Width="180" Style="{StaticResource KawaiiSliderStyle}"
                                 Minimum="3" Maximum="30" 
@@ -461,7 +728,7 @@
                     </Grid>
 
                     <!-- System Section -->
-                    <TextBlock Text="? System" Style="{StaticResource SectionHeaderStyle}"/>
+                    <TextBlock Text="System" Style="{StaticResource SectionHeaderStyle}"/>
 
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -483,7 +750,7 @@
                                   IsChecked="{Binding SoundEffectsEnabled}"/>
                     </Grid>
 
-                    <Grid>
+                    <Grid Margin="0,0,0,15">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -505,7 +772,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Content="?? Reset" 
+                <Button Grid.Column="0" Content="Reset" 
                         Style="{StaticResource SettingsSecondaryButtonStyle}"
                         Command="{Binding ResetToDefaultsCommand}"/>
 
@@ -514,7 +781,7 @@
                         Command="{Binding CancelCommand}"
                         Margin="0,0,10,0"/>
 
-                <Button Grid.Column="3" Content="Save ??" 
+                <Button Grid.Column="3" Content="Save" 
                         Style="{StaticResource SettingsPrimaryButtonStyle}"
                         Command="{Binding SaveCommand}"/>
             </Grid>

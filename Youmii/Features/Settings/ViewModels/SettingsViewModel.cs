@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
@@ -23,12 +24,61 @@ public sealed class SettingsViewModel : ViewModelBase
         _editingSettings = new UserSettings();
         _editingSettings.CopyFrom(_settingsService.CurrentSettings);
 
+        // Initialize option collections
+        PersonalityTypes = new ObservableCollection<PersonalityOption>
+        {
+            new("cheerful", "Cheerful", "Always happy and positive!"),
+            new("shy", "Shy", "Quiet and a bit nervous..."),
+            new("energetic", "Energetic", "Full of energy and excitement!"),
+            new("calm", "Calm", "Peaceful and relaxed~"),
+            new("playful", "Playful", "Loves jokes and games!"),
+            new("caring", "Caring", "Sweet and nurturing~")
+        };
+
+        SpeechStyles = new ObservableCollection<SpeechStyleOption>
+        {
+            new("cute", "Cute", "Kawaii speech patterns~"),
+            new("casual", "Casual", "Friendly and relaxed"),
+            new("formal", "Formal", "Polite and proper"),
+            new("playful", "Playful", "Fun and silly!"),
+            new("poetic", "Poetic", "Dreamy and expressive")
+        };
+
+        BubbleStyles = new ObservableCollection<BubbleStyleOption>
+        {
+            new("round", "Round", "Soft and friendly"),
+            new("cloud", "Cloud", "Fluffy like a cloud~"),
+            new("pixel", "Pixel", "Retro game style!"),
+            new("minimal", "Minimal", "Clean and simple")
+        };
+
+        AccentColors = new ObservableCollection<AccentColorOption>
+        {
+            new("#FFE91E63", "Pink", "Pink"),
+            new("#FF9C27B0", "Purple", "Purple"),
+            new("#FF2196F3", "Blue", "Blue"),
+            new("#FF00BCD4", "Cyan", "Cyan"),
+            new("#FF4CAF50", "Green", "Green"),
+            new("#FFFFC107", "Yellow", "Yellow"),
+            new("#FFFF5722", "Orange", "Orange"),
+            new("#FFF44336", "Red", "Red")
+        };
+
         SaveCommand = new RelayCommand(Save, () => HasChanges);
         CancelCommand = new RelayCommand(Cancel);
         ResetToDefaultsCommand = new RelayCommand(ResetToDefaults);
     }
 
-    #region Bindable Properties
+    #region Option Collections
+
+    public ObservableCollection<PersonalityOption> PersonalityTypes { get; }
+    public ObservableCollection<SpeechStyleOption> SpeechStyles { get; }
+    public ObservableCollection<BubbleStyleOption> BubbleStyles { get; }
+    public ObservableCollection<AccentColorOption> AccentColors { get; }
+
+    #endregion
+
+    #region Existing Bindable Properties
 
     public string CharacterName
     {
@@ -193,6 +243,187 @@ public sealed class SettingsViewModel : ViewModelBase
 
     public int CharacterScalePercent => (int)Math.Round(CharacterScale * 100);
 
+    #endregion
+
+    #region New Personality Properties
+
+    public string PersonalityType
+    {
+        get => _editingSettings.PersonalityType;
+        set
+        {
+            if (_editingSettings.PersonalityType != value)
+            {
+                _editingSettings.PersonalityType = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public string SpeechStyle
+    {
+        get => _editingSettings.SpeechStyle;
+        set
+        {
+            if (_editingSettings.SpeechStyle != value)
+            {
+                _editingSettings.SpeechStyle = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public int ChattinessLevel
+    {
+        get => _editingSettings.ChattinessLevel;
+        set
+        {
+            value = Math.Clamp(value, 0, 100);
+            if (_editingSettings.ChattinessLevel != value)
+            {
+                _editingSettings.ChattinessLevel = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ChattinessDescription));
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public string ChattinessDescription => ChattinessLevel switch
+    {
+        < 20 => "Very quiet",
+        < 40 => "Shy",
+        < 60 => "Balanced",
+        < 80 => "Talkative",
+        _ => "Very chatty!"
+    };
+
+    #endregion
+
+    #region New Theme Properties
+
+    public string AccentColor
+    {
+        get => _editingSettings.AccentColor;
+        set
+        {
+            if (_editingSettings.AccentColor != value)
+            {
+                _editingSettings.AccentColor = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public string BubbleStyle
+    {
+        get => _editingSettings.BubbleStyle;
+        set
+        {
+            if (_editingSettings.BubbleStyle != value)
+            {
+                _editingSettings.BubbleStyle = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public bool DarkModeEnabled
+    {
+        get => _editingSettings.DarkModeEnabled;
+        set
+        {
+            if (_editingSettings.DarkModeEnabled != value)
+            {
+                _editingSettings.DarkModeEnabled = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    #endregion
+
+    #region New Effects Properties
+
+    public bool BounceAnimationEnabled
+    {
+        get => _editingSettings.BounceAnimationEnabled;
+        set
+        {
+            if (_editingSettings.BounceAnimationEnabled != value)
+            {
+                _editingSettings.BounceAnimationEnabled = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public bool SparkleEffectsEnabled
+    {
+        get => _editingSettings.SparkleEffectsEnabled;
+        set
+        {
+            if (_editingSettings.SparkleEffectsEnabled != value)
+            {
+                _editingSettings.SparkleEffectsEnabled = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public bool TypingAnimationEnabled
+    {
+        get => _editingSettings.TypingAnimationEnabled;
+        set
+        {
+            if (_editingSettings.TypingAnimationEnabled != value)
+            {
+                _editingSettings.TypingAnimationEnabled = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public double AnimationSpeed
+    {
+        get => _editingSettings.AnimationSpeed;
+        set
+        {
+            value = Math.Clamp(value, 0.5, 2.0);
+            if (Math.Abs(_editingSettings.AnimationSpeed - value) > 0.001)
+            {
+                _editingSettings.AnimationSpeed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AnimationSpeedPercent));
+                OnPropertyChanged(nameof(AnimationSpeedDescription));
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public int AnimationSpeedPercent => (int)Math.Round(AnimationSpeed * 100);
+
+    public string AnimationSpeedDescription => AnimationSpeed switch
+    {
+        < 0.7 => "Slow & relaxed",
+        < 1.0 => "Gentle",
+        < 1.3 => "Normal",
+        < 1.7 => "Snappy",
+        _ => "Super fast!"
+    };
+
+    #endregion
+
+    #region HasChanges Property
+
     public bool HasChanges
     {
         get => _hasChanges;
@@ -233,19 +464,37 @@ public sealed class SettingsViewModel : ViewModelBase
 
     private void Save()
     {
-        // Apply changes to the service
-        _settingsService.CurrentSettings.CharacterName = _editingSettings.CharacterName;
-        _settingsService.CurrentSettings.IdleMinIntervalSeconds = _editingSettings.IdleMinIntervalSeconds;
-        _settingsService.CurrentSettings.IdleMaxIntervalSeconds = _editingSettings.IdleMaxIntervalSeconds;
-        _settingsService.CurrentSettings.IdleMessagesEnabled = _editingSettings.IdleMessagesEnabled;
-        _settingsService.CurrentSettings.BubbleDisplaySeconds = _editingSettings.BubbleDisplaySeconds;
-        _settingsService.CurrentSettings.AlwaysOnTop = _editingSettings.AlwaysOnTop;
-        _settingsService.CurrentSettings.CharacterOpacity = _editingSettings.CharacterOpacity;
-        _settingsService.CurrentSettings.SoundEffectsEnabled = _editingSettings.SoundEffectsEnabled;
-        _settingsService.CurrentSettings.StartWithWindows = _editingSettings.StartWithWindows;
-        _settingsService.CurrentSettings.CharacterScale = _editingSettings.CharacterScale;
+        // Apply all changes to the service
+        var settings = _settingsService.CurrentSettings;
+        
+        // Existing settings
+        settings.CharacterName = _editingSettings.CharacterName;
+        settings.IdleMinIntervalSeconds = _editingSettings.IdleMinIntervalSeconds;
+        settings.IdleMaxIntervalSeconds = _editingSettings.IdleMaxIntervalSeconds;
+        settings.IdleMessagesEnabled = _editingSettings.IdleMessagesEnabled;
+        settings.BubbleDisplaySeconds = _editingSettings.BubbleDisplaySeconds;
+        settings.AlwaysOnTop = _editingSettings.AlwaysOnTop;
+        settings.CharacterOpacity = _editingSettings.CharacterOpacity;
+        settings.SoundEffectsEnabled = _editingSettings.SoundEffectsEnabled;
+        settings.StartWithWindows = _editingSettings.StartWithWindows;
+        settings.CharacterScale = _editingSettings.CharacterScale;
+        
+        // New personality settings
+        settings.PersonalityType = _editingSettings.PersonalityType;
+        settings.SpeechStyle = _editingSettings.SpeechStyle;
+        settings.ChattinessLevel = _editingSettings.ChattinessLevel;
+        
+        // New theme settings
+        settings.AccentColor = _editingSettings.AccentColor;
+        settings.BubbleStyle = _editingSettings.BubbleStyle;
+        settings.DarkModeEnabled = _editingSettings.DarkModeEnabled;
+        
+        // New effects settings
+        settings.BounceAnimationEnabled = _editingSettings.BounceAnimationEnabled;
+        settings.SparkleEffectsEnabled = _editingSettings.SparkleEffectsEnabled;
+        settings.TypingAnimationEnabled = _editingSettings.TypingAnimationEnabled;
+        settings.AnimationSpeed = _editingSettings.AnimationSpeed;
 
-        // Save to disk asynchronously
         _ = _settingsService.SaveAsync();
 
         HasChanges = false;
@@ -262,6 +511,7 @@ public sealed class SettingsViewModel : ViewModelBase
     {
         var defaults = new UserSettings();
         
+        // Existing settings
         CharacterName = defaults.CharacterName;
         IdleMinIntervalSeconds = defaults.IdleMinIntervalSeconds;
         IdleMaxIntervalSeconds = defaults.IdleMaxIntervalSeconds;
@@ -272,7 +522,43 @@ public sealed class SettingsViewModel : ViewModelBase
         SoundEffectsEnabled = defaults.SoundEffectsEnabled;
         StartWithWindows = defaults.StartWithWindows;
         CharacterScale = defaults.CharacterScale;
+        
+        // New settings
+        PersonalityType = defaults.PersonalityType;
+        SpeechStyle = defaults.SpeechStyle;
+        ChattinessLevel = defaults.ChattinessLevel;
+        AccentColor = defaults.AccentColor;
+        BubbleStyle = defaults.BubbleStyle;
+        DarkModeEnabled = defaults.DarkModeEnabled;
+        BounceAnimationEnabled = defaults.BounceAnimationEnabled;
+        SparkleEffectsEnabled = defaults.SparkleEffectsEnabled;
+        TypingAnimationEnabled = defaults.TypingAnimationEnabled;
+        AnimationSpeed = defaults.AnimationSpeed;
     }
 
     #endregion
 }
+
+#region Option Models
+
+/// <summary>
+/// Represents a personality type option.
+/// </summary>
+public sealed record PersonalityOption(string Value, string DisplayName, string Description);
+
+/// <summary>
+/// Represents a speech style option.
+/// </summary>
+public sealed record SpeechStyleOption(string Value, string DisplayName, string Description);
+
+/// <summary>
+/// Represents a bubble style option.
+/// </summary>
+public sealed record BubbleStyleOption(string Value, string DisplayName, string Description);
+
+/// <summary>
+/// Represents an accent color option.
+/// </summary>
+public sealed record AccentColorOption(string HexColor, string Name, string Emoji);
+
+#endregion
