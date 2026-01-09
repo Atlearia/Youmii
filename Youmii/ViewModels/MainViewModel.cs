@@ -3,6 +3,7 @@ using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
 using Youmii.Core.Services;
 using Youmii.Features.Chat.Services;
+using Youmii.Features.Games.Services;
 using Youmii.Features.IdleMessages.Services;
 using Youmii.Features.Settings.Services;
 using Youmii.Infrastructure;
@@ -19,6 +20,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly SettingsCoordinator _settingsCoordinator;
     private readonly ChatCoordinator _chatCoordinator;
     private readonly IdleMessageCoordinator _idleMessageCoordinator;
+    private readonly GamesCoordinator _gamesCoordinator;
     private readonly DispatcherTimer _autoHideTimer;
 
     private string _userInput = string.Empty;
@@ -44,6 +46,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             _serviceFactory.CreateBrainClient()
         );
         _idleMessageCoordinator = new IdleMessageCoordinator();
+        _gamesCoordinator = new GamesCoordinator();
 
         // Subscribe to coordinator events
         _settingsCoordinator.SettingsApplied += OnSettingsApplied;
@@ -205,6 +208,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             case "settings":
                 OpenSettings();
                 break;
+            case "games":
+                OpenGames();
+                break;
             default:
                 ShowBubble($"{item.Icon} {item.Label} - Coming soon!");
                 break;
@@ -316,6 +322,32 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         ResetIdleTimer();
         await _chatCoordinator.ClearHistoryAsync();
         ShowBubble("Conversation cleared!");
+    }
+
+    #endregion
+
+    #region Private Methods - Games
+
+    private void OpenGames()
+    {
+        // Close the radial menu first
+        RadialMenu.Hide();
+        
+        // Use dispatcher to allow UI to update before opening modal
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Background,
+            new Action(() =>
+            {
+                var selectedGame = _gamesCoordinator.OpenGamesDialog();
+                if (!string.IsNullOrEmpty(selectedGame))
+                {
+                    ShowBubble("Let's play! Good luck!");
+                }
+                else
+                {
+                    ShowBubble("Come back when you want to play~");
+                }
+            }));
     }
 
     #endregion
