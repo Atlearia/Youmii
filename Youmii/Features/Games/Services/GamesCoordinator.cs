@@ -3,6 +3,12 @@ using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
 using Youmii.Features.Games.Chess.ViewModels;
 using Youmii.Features.Games.Chess.Views;
+using Youmii.Features.Games.MemoryMatch.ViewModels;
+using Youmii.Features.Games.MemoryMatch.Views;
+using Youmii.Features.Games.Snake.ViewModels;
+using Youmii.Features.Games.Snake.Views;
+using Youmii.Features.Games.TicTacToe.ViewModels;
+using Youmii.Features.Games.TicTacToe.Views;
 using Youmii.Features.Games.ViewModels;
 using Youmii.Features.Games.Views;
 
@@ -58,6 +64,15 @@ public sealed class GamesCoordinator
             case "chess":
                 LaunchChess();
                 break;
+            case "tictactoe":
+                LaunchTicTacToe();
+                break;
+            case "memory":
+                LaunchMemoryMatch();
+                break;
+            case "snake":
+                LaunchSnake();
+                break;
             // Add more games here as they're implemented
             default:
                 // Game not yet implemented
@@ -71,6 +86,30 @@ public sealed class GamesCoordinator
         var chessWindow = new ChessGameWindow();
         chessWindow.SetViewModel(chessVm);
         chessWindow.Show();
+    }
+
+    private static void LaunchTicTacToe()
+    {
+        var vm = new TicTacToeViewModel();
+        var window = new TicTacToeWindow();
+        window.SetViewModel(vm);
+        window.Show();
+    }
+
+    private static void LaunchMemoryMatch()
+    {
+        var vm = new MemoryMatchViewModel();
+        var window = new MemoryMatchWindow();
+        window.SetViewModel(vm);
+        window.Show();
+    }
+
+    private static void LaunchSnake()
+    {
+        var vm = new SnakeViewModel();
+        var window = new SnakeWindow();
+        window.SetViewModel(vm);
+        window.Show();
     }
 }
 
@@ -129,6 +168,39 @@ public sealed class GameService : IGameService
                 Difficulty = 4,
                 AccentColor = "#FF9C27B0"
             },
+            new()
+            {
+                Id = "tictactoe",
+                Name = "Tic Tac Toe",
+                Description = "Quick and easy classic",
+                Icon = "#",
+                Category = "Board",
+                IsAvailable = true,
+                Difficulty = 1,
+                AccentColor = "#FF2196F3"
+            },
+            new()
+            {
+                Id = "memory",
+                Name = "Memory Match",
+                Description = "Test your memory!",
+                Icon = "\u2665", // Heart
+                Category = "Puzzle",
+                IsAvailable = true,
+                Difficulty = 2,
+                AccentColor = "#FFFF5722"
+            },
+            new()
+            {
+                Id = "snake",
+                Name = "Snake",
+                Description = "Classic arcade game",
+                Icon = "~",
+                Category = "Arcade",
+                IsAvailable = true,
+                Difficulty = 2,
+                AccentColor = "#FF8BC34A"
+            },
 
             // Coming Soon Games
             new()
@@ -141,28 +213,6 @@ public sealed class GameService : IGameService
                 IsAvailable = false,
                 Difficulty = 2,
                 AccentColor = "#FFE91E63"
-            },
-            new()
-            {
-                Id = "tictactoe",
-                Name = "Tic Tac Toe",
-                Description = "Quick and easy classic",
-                Icon = "#",
-                Category = "Board",
-                IsAvailable = false,
-                Difficulty = 1,
-                AccentColor = "#FF2196F3"
-            },
-            new()
-            {
-                Id = "memory",
-                Name = "Memory Match",
-                Description = "Test your memory!",
-                Icon = "\u2665", // Heart
-                Category = "Puzzle",
-                IsAvailable = false,
-                Difficulty = 2,
-                AccentColor = "#FFFF5722"
             },
             new()
             {
@@ -185,17 +235,6 @@ public sealed class GameService : IGameService
                 IsAvailable = false,
                 Difficulty = 2,
                 AccentColor = "#FF00BCD4"
-            },
-            new()
-            {
-                Id = "snake",
-                Name = "Snake",
-                Description = "Classic arcade game",
-                Icon = "~",
-                Category = "Arcade",
-                IsAvailable = false,
-                Difficulty = 2,
-                AccentColor = "#FF8BC34A"
             },
             new()
             {

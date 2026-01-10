@@ -1,0 +1,255 @@
+<Window x:Class="Youmii.Features.Games.MemoryMatch.Views.MemoryMatchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Memory Match"
+        Width="420"
+        Height="580"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
+
+    <Window.Resources>
+        <LinearGradientBrush x:Key="BackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFFF3E0" Offset="0"/>
+            <GradientStop Color="#FFFFCCBC" Offset="1"/>
+        </LinearGradientBrush>
+
+        <Style x:Key="CardButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <!-- Card Back -->
+                            <Border x:Name="cardBack"
+                                    CornerRadius="8"
+                                    Background="#FFFF5722"
+                                    BorderBrush="#FFE64A19"
+                                    BorderThickness="2">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.3"/>
+                                </Border.Effect>
+                                <TextBlock Text="?" FontSize="28" FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- Card Front -->
+                            <Border x:Name="cardFront"
+                                    CornerRadius="8"
+                                    Background="White"
+                                    BorderBrush="#FFFF5722"
+                                    BorderThickness="2"
+                                    Visibility="Collapsed">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Opacity="0.3"/>
+                                </Border.Effect>
+                                <TextBlock Text="{Binding Symbol}" 
+                                           FontSize="32"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Matched overlay -->
+                            <Border x:Name="matchedOverlay"
+                                    CornerRadius="8"
+                                    Background="#404CAF50"
+                                    Visibility="Collapsed"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsFlipped}" Value="True">
+                                <Setter TargetName="cardBack" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="cardFront" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsMatched}" Value="True">
+                                <Setter TargetName="cardBack" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="cardFront" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="matchedOverlay" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="cardBack" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GameButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#FFFF5722"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                CornerRadius="10" 
+                                Padding="{TemplateBinding Padding}"
+                                Background="White"
+                                BorderBrush="#FFFFCCBC"
+                                BorderThickness="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFFFF3E0"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFFF5722"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="20" Background="{StaticResource BackgroundGradient}" 
+            BorderBrush="#FFFFCCBC" BorderThickness="2">
+        <Border.Effect>
+            <DropShadowEffect Color="#80FF5722" BlurRadius="25" ShadowDepth="5" Opacity="0.3"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar -->
+            <Grid Grid.Row="0" Margin="16,12,16,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="??" FontSize="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Memory Match" FontSize="20" FontWeight="Bold" Foreground="#FFFF5722"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Width="28" Height="28" Click="CloseButton_Click" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Ellipse x:Name="bg" Fill="Transparent"/>
+                                <TextBlock Text="?" FontSize="12" Foreground="#FF757575"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Fill" Value="#20FF5722"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <!-- Stats -->
+            <Border Grid.Row="1" Margin="16,12,16,8"
+                    Background="White" CornerRadius="12" Padding="12,8"
+                    BorderBrush="#FFFFCCBC" BorderThickness="2">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock Text="Time" FontSize="10" Foreground="#FF9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TimeDisplay}" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#FFFF5722" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Width="1" Background="#FFFFCCBC"/>
+
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock Text="Moves" FontSize="10" Foreground="#FF9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding Moves}" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#FFFF5722" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="3" Width="1" Background="#FFFFCCBC"/>
+
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                        <TextBlock Text="Found" FontSize="10" Foreground="#FF9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding StatusText}" FontSize="14" FontWeight="Bold" 
+                                   Foreground="#FF4CAF50" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Game Board -->
+            <Border Grid.Row="2" Margin="16,0,16,0"
+                    HorizontalAlignment="Center"
+                    Background="White" CornerRadius="12" Padding="8"
+                    BorderBrush="#FFFF5722" BorderThickness="3">
+                <Border.Effect>
+                    <DropShadowEffect Color="#FFFF5722" BlurRadius="15" ShadowDepth="3" Opacity="0.25"/>
+                </Border.Effect>
+
+                <ItemsControl ItemsSource="{Binding Cards}" Width="340" Height="340">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="4" Columns="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource CardButtonStyle}"
+                                    Margin="4"
+                                    Command="{Binding DataContext.CardClickedCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <!-- New Game Button -->
+            <Button Grid.Row="3" Content="New Game" 
+                    Style="{StaticResource GameButtonStyle}"
+                    Command="{Binding NewGameCommand}"
+                    HorizontalAlignment="Center"
+                    Margin="16,12,16,0"/>
+
+            <!-- Best Scores -->
+            <Border Grid.Row="4" Margin="16,12,16,16"
+                    Background="White" CornerRadius="12" Padding="12,8"
+                    BorderBrush="#FFFFCCBC" BorderThickness="2">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock Text="Best Time" FontSize="10" Foreground="#FF9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding BestTimeDisplay}" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#FF9C27B0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Width="1" Background="#FFFFCCBC"/>
+
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock Text="Best Moves" FontSize="10" Foreground="#FF9E9E9E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding BestMovesDisplay}" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#FF9C27B0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
