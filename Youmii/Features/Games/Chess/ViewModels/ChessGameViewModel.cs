@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
+using Youmii.Features.Games.Chess.Engine;
 using Youmii.Features.Games.Chess.Models;
 using Youmii.ViewModels;
 
@@ -15,6 +17,14 @@ public sealed class ChessGameViewModel : ViewModelBase
     private bool _isWhiteTurn = true;
     private string _gameStatus = string.Empty;
     private readonly List<ChessMove> _moveHistory = [];
+    
+    // AI Engine
+    private readonly ChessEngine _engine = new();
+    private bool _isPlayingAgainstAi = true;
+    private bool _isAiWhite = false; // AI plays black by default
+    private ChessDifficulty _difficulty = ChessDifficulty.Medium;
+    private bool _isAiThinking;
+    private readonly DispatcherTimer _aiMoveTimer;
 
     public ChessGameViewModel()
     {
@@ -26,6 +36,12 @@ public sealed class ChessGameViewModel : ViewModelBase
         NewGameCommand = new RelayCommand(NewGame);
         UndoMoveCommand = new RelayCommand(UndoMove, CanUndoMove);
         HintCommand = new RelayCommand(ShowHint);
+        SetDifficultyCommand = new RelayCommand<string>(SetDifficulty);
+        ToggleAiCommand = new RelayCommand(ToggleAi);
+
+        // Timer for AI move delay (makes it feel more natural)
+        _aiMoveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _aiMoveTimer.Tick += OnAiMoveTimerTick;
 
         InitializeBoard();
     }
@@ -59,6 +75,46 @@ public sealed class ChessGameViewModel : ViewModelBase
     public string WhiteCapturedPieces { get; private set; } = string.Empty;
     public string BlackCapturedPieces { get; private set; } = string.Empty;
 
+    public bool IsPlayingAgainstAi
+    {
+        get => _isPlayingAgainstAi;
+        set
+        {
+            if (SetProperty(ref _isPlayingAgainstAi, value))
+            {
+                OnPropertyChanged(nameof(AiModeDisplay));
+            }
+        }
+    }
+
+    public ChessDifficulty Difficulty
+    {
+        get => _difficulty;
+        set
+        {
+            if (SetProperty(ref _difficulty, value))
+            {
+                OnPropertyChanged(nameof(DifficultyDisplay));
+                OnPropertyChanged(nameof(IsEasySelected));
+                OnPropertyChanged(nameof(IsMediumSelected));
+                OnPropertyChanged(nameof(IsHardSelected));
+            }
+        }
+    }
+
+    public string DifficultyDisplay => Difficulty.ToString();
+    public string AiModeDisplay => IsPlayingAgainstAi ? "vs AI" : "2 Players";
+
+    public bool IsEasySelected => Difficulty == ChessDifficulty.Easy;
+    public bool IsMediumSelected => Difficulty == ChessDifficulty.Medium;
+    public bool IsHardSelected => Difficulty == ChessDifficulty.Hard;
+
+    public bool IsAiThinking
+    {
+        get => _isAiThinking;
+        private set => SetProperty(ref _isAiThinking, value);
+    }
+
     #endregion
 
     #region Commands
@@ -67,6 +123,8 @@ public sealed class ChessGameViewModel : ViewModelBase
     public ICommand NewGameCommand { get; }
     public ICommand UndoMoveCommand { get; }
     public ICommand HintCommand { get; }
+    public ICommand SetDifficultyCommand { get; }
+    public ICommand ToggleAiCommand { get; }
 
     #endregion
 
@@ -86,6 +144,7 @@ public sealed class ChessGameViewModel : ViewModelBase
         GameStatus = string.Empty;
         WhiteCapturedPieces = string.Empty;
         BlackCapturedPieces = string.Empty;
+        IsAiThinking = false;
         OnPropertyChanged(nameof(WhiteCapturedPieces));
         OnPropertyChanged(nameof(BlackCapturedPieces));
 
@@ -164,6 +223,12 @@ public sealed class ChessGameViewModel : ViewModelBase
     private void OnSquareClicked(ChessSquareViewModel? square)
     {
         if (square == null) return;
+        
+        // Don't allow moves while AI is thinking or game is over
+        if (IsAiThinking || !string.IsNullOrEmpty(GameStatus)) return;
+        
+        // In AI mode, don't allow moving AI's pieces
+        if (IsPlayingAgainstAi && IsWhiteTurn == _isAiWhite) return;
 
         // If no piece selected, try to select one
         if (_selectedSquare == null)
@@ -194,9 +259,51 @@ public sealed class ChessGameViewModel : ViewModelBase
         if (IsValidMove(_selectedSquare, square))
         {
             MakeMove(_selectedSquare, square);
+            
+            // Trigger AI move if playing against AI
+            if (IsPlayingAgainstAi && string.IsNullOrEmpty(GameStatus))
+            {
+                TriggerAiMove();
+            }
         }
 
         DeselectAll();
+    }
+
+    private void TriggerAiMove()
+    {
+        IsAiThinking = true;
+        GameStatus = "AI thinking...";
+        _aiMoveTimer.Start();
+    }
+
+    private void OnAiMoveTimerTick(object? sender, EventArgs e)
+    {
+        _aiMoveTimer.Stop();
+        MakeAiMove();
+    }
+
+    private void MakeAiMove()
+    {
+        if (!IsPlayingAgainstAi || IsWhiteTurn != _isAiWhite)
+        {
+            IsAiThinking = false;
+            GameStatus = string.Empty;
+            return;
+        }
+
+        var bestMove = _engine.GetBestMove(Squares, _isAiWhite, Difficulty);
+        
+        if (bestMove.HasValue)
+        {
+            MakeMove(bestMove.Value.from, bestMove.Value.to);
+        }
+
+        IsAiThinking = false;
+        if (string.IsNullOrEmpty(GameStatus) || GameStatus == "AI thinking...")
+        {
+            GameStatus = string.Empty;
+        }
     }
 
     private void SelectSquare(ChessSquareViewModel square)
@@ -368,37 +475,45 @@ public sealed class ChessGameViewModel : ViewModelBase
 
     private void NewGame()
     {
+        _aiMoveTimer.Stop();
         InitializeBoard();
     }
 
     private bool CanUndoMove()
     {
-        return _moveHistory.Count > 0;
+        return _moveHistory.Count > 0 && !IsAiThinking;
     }
 
     private void UndoMove()
     {
-        if (_moveHistory.Count == 0) return;
+        if (_moveHistory.Count == 0 || IsAiThinking) return;
 
-        var lastMove = _moveHistory[^1];
-        _moveHistory.RemoveAt(_moveHistory.Count - 1);
+        // In AI mode, undo both player and AI move
+        int movesToUndo = IsPlayingAgainstAi && _moveHistory.Count >= 2 ? 2 : 1;
 
-        var fromSquare = GetSquare(lastMove.FromRow, lastMove.FromCol);
-        var toSquare = GetSquare(lastMove.ToRow, lastMove.ToCol);
-
-        if (fromSquare != null && toSquare != null)
+        for (int i = 0; i < movesToUndo && _moveHistory.Count > 0; i++)
         {
-            fromSquare.Piece = lastMove.MovedPiece;
-            toSquare.Piece = lastMove.CapturedPiece;
+            var lastMove = _moveHistory[^1];
+            _moveHistory.RemoveAt(_moveHistory.Count - 1);
 
-            // Remove from captured if there was a capture
-            if (lastMove.CapturedPiece != null)
+            var fromSquare = GetSquare(lastMove.FromRow, lastMove.FromCol);
+            var toSquare = GetSquare(lastMove.ToRow, lastMove.ToCol);
+
+            if (fromSquare != null && toSquare != null)
             {
-                RemoveLastCapturedPiece(lastMove.CapturedPiece.IsWhite);
+                fromSquare.Piece = lastMove.MovedPiece;
+                toSquare.Piece = lastMove.CapturedPiece;
+
+                // Remove from captured if there was a capture
+                if (lastMove.CapturedPiece != null)
+                {
+                    RemoveLastCapturedPiece(lastMove.CapturedPiece.IsWhite);
+                }
             }
+
+            IsWhiteTurn = !IsWhiteTurn;
         }
 
-        IsWhiteTurn = !IsWhiteTurn;
         GameStatus = string.Empty;
         ((RelayCommand)UndoMoveCommand).RaiseCanExecuteChanged();
     }
@@ -419,35 +534,30 @@ public sealed class ChessGameViewModel : ViewModelBase
 
     private void ShowHint()
     {
-        // Simple hint: highlight a random valid move for current player
-        var piecesWithMoves = new List<(ChessSquareViewModel from, ChessSquareViewModel to)>();
-
-        foreach (var square in Squares)
+        if (IsAiThinking) return;
+        
+        // Use the engine to suggest a move
+        var bestMove = _engine.GetBestMove(Squares, IsWhiteTurn, ChessDifficulty.Medium);
+        
+        if (bestMove.HasValue)
         {
-            if (square.Piece != null && square.Piece.IsWhite == IsWhiteTurn)
-            {
-                for (int row = 0; row < 8; row++)
-                {
-                    for (int col = 0; col < 8; col++)
-                    {
-                        var target = GetSquare(row, col);
-                        if (target != null && IsValidMove(square, target))
-                        {
-                            piecesWithMoves.Add((square, target));
-                        }
-                    }
-                }
-            }
-        }
-
-        if (piecesWithMoves.Count > 0)
-        {
-            var random = new Random();
-            var hint = piecesWithMoves[random.Next(piecesWithMoves.Count)];
-            
             DeselectAll();
-            SelectSquare(hint.from);
+            SelectSquare(bestMove.Value.from);
         }
+    }
+
+    private void SetDifficulty(string? difficultyStr)
+    {
+        if (Enum.TryParse<ChessDifficulty>(difficultyStr, out var difficulty))
+        {
+            Difficulty = difficulty;
+        }
+    }
+
+    private void ToggleAi()
+    {
+        IsPlayingAgainstAi = !IsPlayingAgainstAi;
+        NewGame();
     }
 
     #endregion

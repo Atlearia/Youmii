@@ -3,12 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:Youmii.Features.Games.Chess.Converters"
         mc:Ignorable="d"
         Title="Chess"
         Width="520"
-        Height="720"
+        Height="780"
         MinWidth="520"
-        MinHeight="720"
+        MinHeight="780"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -17,6 +18,9 @@
         Topmost="True">
 
     <Window.Resources>
+        <!-- Converters -->
+        <converters:BoolToTagConverter x:Key="BoolToTagConverter"/>
+        
         <!-- Gradient Background -->
         <LinearGradientBrush x:Key="ChessBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="#FFFCE4EC" Offset="0"/>
@@ -125,6 +129,41 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Difficulty Button Style -->
+        <Style x:Key="DifficultyButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#FF757575"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                                CornerRadius="8" 
+                                Padding="{TemplateBinding Padding}"
+                                Background="#FFF5F5F5"
+                                BorderBrush="#FFE0E0E0"
+                                BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFFCE4EC"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Selected">
+                                <Setter TargetName="border" Property="Background" Value="#FFE91E63"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FFE91E63"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Main Container -->
@@ -136,6 +175,7 @@
 
         <Grid Margin="0,0,0,0">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -159,6 +199,11 @@
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                     </TextBlock>
+                    <TextBlock Text="{Binding AiModeDisplay}" 
+                               FontSize="12" 
+                               Foreground="#FF9E9E9E" 
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"/>
                 </StackPanel>
 
                 <!-- Close Button -->
@@ -168,7 +213,7 @@
                         <ControlTemplate TargetType="Button">
                             <Grid>
                                 <Ellipse x:Name="bg" Fill="Transparent"/>
-                                <TextBlock Text="X" FontSize="12" Foreground="#FF757575"
+                                <TextBlock Text="?" FontSize="12" Foreground="#FF757575"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                             <ControlTemplate.Triggers>
@@ -181,8 +226,54 @@
                 </Button>
             </Grid>
 
+            <!-- Difficulty Selector -->
+            <Border Grid.Row="1" Margin="16,10,16,0"
+                    Background="White"
+                    CornerRadius="10"
+                    Padding="10,8"
+                    BorderBrush="#FFF8BBD9"
+                    BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Difficulty Label & Buttons -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Difficulty:" FontSize="12" Foreground="#FF757575" 
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Content="Easy" 
+                                Style="{StaticResource DifficultyButtonStyle}"
+                                Command="{Binding SetDifficultyCommand}"
+                                CommandParameter="Easy"
+                                Tag="{Binding IsEasySelected, Converter={StaticResource BoolToTagConverter}}"
+                                Margin="0,0,4,0"/>
+                        <Button Content="Medium" 
+                                Style="{StaticResource DifficultyButtonStyle}"
+                                Command="{Binding SetDifficultyCommand}"
+                                CommandParameter="Medium"
+                                Tag="{Binding IsMediumSelected, Converter={StaticResource BoolToTagConverter}}"
+                                Margin="0,0,4,0"/>
+                        <Button Content="Hard" 
+                                Style="{StaticResource DifficultyButtonStyle}"
+                                Command="{Binding SetDifficultyCommand}"
+                                CommandParameter="Hard"
+                                Tag="{Binding IsHardSelected, Converter={StaticResource BoolToTagConverter}}"/>
+                    </StackPanel>
+                    
+                    <!-- Mode Toggle -->
+                    <Button Grid.Column="2" 
+                            Content="2P"
+                            ToolTip="Toggle 2 Player / vs AI mode"
+                            Style="{StaticResource DifficultyButtonStyle}"
+                            Command="{Binding ToggleAiCommand}"/>
+                </Grid>
+            </Border>
+
             <!-- Current Turn Indicator -->
-            <Border Grid.Row="1" Margin="16,12,16,8"
+            <Border Grid.Row="2" Margin="16,8,16,8"
                     Background="White"
                     CornerRadius="12"
                     Padding="12,8"
@@ -208,7 +299,7 @@
             </Border>
 
             <!-- Chess Board -->
-            <Border Grid.Row="2" 
+            <Border Grid.Row="3" 
                     Margin="16,0,16,0"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -244,7 +335,7 @@
             </Border>
 
             <!-- Game Controls -->
-            <StackPanel Grid.Row="3" 
+            <StackPanel Grid.Row="4" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center"
                         Margin="16,12,16,0">
@@ -262,7 +353,7 @@
             </StackPanel>
 
             <!-- Score/Captured Pieces -->
-            <Border Grid.Row="4" Margin="16,12,16,16"
+            <Border Grid.Row="5" Margin="16,12,16,16"
                     Background="White"
                     CornerRadius="12"
                     Padding="12,8"
