@@ -64,8 +64,18 @@ public sealed class ServiceContainer : IServiceLocator, IApplicationLifetime, ID
 
     private void RegisterBrainClient()
     {
-        if (Settings.BrainClientType.Equals("Http", StringComparison.OrdinalIgnoreCase))
+        var clientType = Settings.BrainClientType;
+
+        if (clientType.Equals(BrainClientTypes.Ollama, StringComparison.OrdinalIgnoreCase))
         {
+            // Use Ollama for local LLM
+            var ollamaClient = new OllamaBrainClient(Settings.OllamaUrl, Settings.OllamaModel);
+            _disposables.Add(ollamaClient);
+            RegisterSingleton<IBrainClient>(ollamaClient);
+        }
+        else if (clientType.Equals(BrainClientTypes.Http, StringComparison.OrdinalIgnoreCase))
+        {
+            // Use HTTP brain server
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             _disposables.Add(httpClient);
 
@@ -75,6 +85,7 @@ public sealed class ServiceContainer : IServiceLocator, IApplicationLifetime, ID
         }
         else
         {
+            // Default to stub client
             RegisterSingleton<IBrainClient>(new StubBrainClient());
         }
     }
