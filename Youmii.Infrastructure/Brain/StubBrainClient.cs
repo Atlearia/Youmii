@@ -8,6 +8,9 @@ namespace Youmii.Infrastructure.Brain;
 /// </summary>
 public sealed class StubBrainClient : IBrainClient
 {
+    /// <inheritdoc />
+    public string ClientName => "Stub (Offline)";
+
     private static readonly string[] GenericResponses =
     [
         "That's interesting! Tell me more.",

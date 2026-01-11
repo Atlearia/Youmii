@@ -18,6 +18,9 @@ public sealed class OllamaBrainClient : IBrainClient, IDisposable
     private readonly string _model;
     private readonly string _systemPrompt;
 
+    /// <inheritdoc />
+    public string ClientName => $"Ollama ({_model})";
+
     public OllamaBrainClient(string baseUrl = "http://localhost:11434", string model = "llama3.2")
     {
         _baseUrl = baseUrl.TrimEnd('/');
