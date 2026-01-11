@@ -14,6 +14,9 @@ public sealed class HttpBrainClient : IBrainClient
     private readonly string _baseUrl;
     private readonly IBrainClient _fallbackClient;
 
+    /// <inheritdoc />
+    public string ClientName => "HTTP Server";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

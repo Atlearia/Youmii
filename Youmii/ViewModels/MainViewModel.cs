@@ -22,6 +22,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly IdleMessageCoordinator _idleMessageCoordinator;
     private readonly GamesCoordinator _gamesCoordinator;
     private readonly DispatcherTimer _autoHideTimer;
+    private readonly string _brainClientName;
 
     private string _userInput = string.Empty;
     private string _bubbleText = string.Empty;
@@ -39,11 +40,15 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         // Initialize infrastructure
         _serviceFactory = new ServiceFactory();
         
+        // Get brain client and store its name for display
+        var brainClient = _serviceFactory.CreateBrainClient();
+        _brainClientName = brainClient.ClientName;
+        
         // Initialize feature coordinators
         _settingsCoordinator = new SettingsCoordinator();
         _chatCoordinator = new ChatCoordinator(
             _serviceFactory.CreateConversationService(),
-            _serviceFactory.CreateBrainClient()
+            brainClient
         );
         _idleMessageCoordinator = new IdleMessageCoordinator();
         _gamesCoordinator = new GamesCoordinator();
@@ -243,9 +248,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             // Start idle messages
             _idleMessageCoordinator.Start();
             
-            // Show welcome message
+            // Show welcome message with AI backend info
             var name = _settingsCoordinator.CurrentSettings.CharacterName;
-            ShowBubble($"Hello! I'm {name}! Hold click on me for options!");
+            ShowBubble($"Hello! I'm {name}! Using: {_brainClientName}");
         }
         catch (Exception ex)
         {
