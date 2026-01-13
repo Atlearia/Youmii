@@ -64,6 +64,25 @@ public sealed class SettingsViewModel : ViewModelBase
             new("#FFF44336", "Red", "Red")
         };
 
+        // AI Options
+        BrainClientTypes = new ObservableCollection<BrainClientOption>
+        {
+            new(Core.Models.BrainClientTypes.Auto, "Auto-detect", "Automatically uses Ollama if available, falls back to offline mode"),
+            new(Core.Models.BrainClientTypes.Ollama, "Ollama (Local AI)", "Use local Ollama server for AI responses"),
+            new(Core.Models.BrainClientTypes.Stub, "Offline Mode", "Uses pre-written responses (no AI)"),
+            new(Core.Models.BrainClientTypes.Http, "HTTP Server", "Connect to a custom brain server")
+        };
+
+        OllamaModels = new ObservableCollection<OllamaModelOption>
+        {
+            new("llama3.2", "Llama 3.2", "Meta's latest, great balance of speed and quality"),
+            new("llama3.1", "Llama 3.1", "Larger and smarter, but slower"),
+            new("mistral", "Mistral", "Fast and efficient"),
+            new("phi3", "Phi-3", "Microsoft's compact model, very fast"),
+            new("gemma2", "Gemma 2", "Google's open model"),
+            new("qwen2.5", "Qwen 2.5", "Alibaba's multilingual model")
+        };
+
         SaveCommand = new RelayCommand(Save, () => HasChanges);
         CancelCommand = new RelayCommand(Cancel);
         ResetToDefaultsCommand = new RelayCommand(ResetToDefaults);
@@ -75,6 +94,8 @@ public sealed class SettingsViewModel : ViewModelBase
     public ObservableCollection<SpeechStyleOption> SpeechStyles { get; }
     public ObservableCollection<BubbleStyleOption> BubbleStyles { get; }
     public ObservableCollection<AccentColorOption> AccentColors { get; }
+    public ObservableCollection<BrainClientOption> BrainClientTypes { get; }
+    public ObservableCollection<OllamaModelOption> OllamaModels { get; }
 
     #endregion
 
@@ -422,6 +443,57 @@ public sealed class SettingsViewModel : ViewModelBase
 
     #endregion
 
+    #region AI Settings Properties
+
+    public string BrainClientType
+    {
+        get => _editingSettings.BrainClientType;
+        set
+        {
+            if (_editingSettings.BrainClientType != value)
+            {
+                _editingSettings.BrainClientType = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsOllamaSettingsVisible));
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public bool IsOllamaSettingsVisible => 
+        BrainClientType == Core.Models.BrainClientTypes.Auto || 
+        BrainClientType == Core.Models.BrainClientTypes.Ollama;
+
+    public string OllamaUrl
+    {
+        get => _editingSettings.OllamaUrl;
+        set
+        {
+            if (_editingSettings.OllamaUrl != value)
+            {
+                _editingSettings.OllamaUrl = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    public string OllamaModel
+    {
+        get => _editingSettings.OllamaModel;
+        set
+        {
+            if (_editingSettings.OllamaModel != value)
+            {
+                _editingSettings.OllamaModel = value;
+                OnPropertyChanged();
+                MarkAsChanged();
+            }
+        }
+    }
+
+    #endregion
+
     #region HasChanges Property
 
     public bool HasChanges
@@ -479,21 +551,26 @@ public sealed class SettingsViewModel : ViewModelBase
         settings.StartWithWindows = _editingSettings.StartWithWindows;
         settings.CharacterScale = _editingSettings.CharacterScale;
         
-        // New personality settings
+        // Personality settings
         settings.PersonalityType = _editingSettings.PersonalityType;
         settings.SpeechStyle = _editingSettings.SpeechStyle;
         settings.ChattinessLevel = _editingSettings.ChattinessLevel;
         
-        // New theme settings
+        // Theme settings
         settings.AccentColor = _editingSettings.AccentColor;
         settings.BubbleStyle = _editingSettings.BubbleStyle;
         settings.DarkModeEnabled = _editingSettings.DarkModeEnabled;
         
-        // New effects settings
+        // Effects settings
         settings.BounceAnimationEnabled = _editingSettings.BounceAnimationEnabled;
         settings.SparkleEffectsEnabled = _editingSettings.SparkleEffectsEnabled;
         settings.TypingAnimationEnabled = _editingSettings.TypingAnimationEnabled;
         settings.AnimationSpeed = _editingSettings.AnimationSpeed;
+
+        // AI settings
+        settings.BrainClientType = _editingSettings.BrainClientType;
+        settings.OllamaUrl = _editingSettings.OllamaUrl;
+        settings.OllamaModel = _editingSettings.OllamaModel;
 
         _ = _settingsService.SaveAsync();
 
@@ -523,7 +600,7 @@ public sealed class SettingsViewModel : ViewModelBase
         StartWithWindows = defaults.StartWithWindows;
         CharacterScale = defaults.CharacterScale;
         
-        // New settings
+        // Personality settings
         PersonalityType = defaults.PersonalityType;
         SpeechStyle = defaults.SpeechStyle;
         ChattinessLevel = defaults.ChattinessLevel;
@@ -534,6 +611,11 @@ public sealed class SettingsViewModel : ViewModelBase
         SparkleEffectsEnabled = defaults.SparkleEffectsEnabled;
         TypingAnimationEnabled = defaults.TypingAnimationEnabled;
         AnimationSpeed = defaults.AnimationSpeed;
+
+        // AI settings
+        BrainClientType = defaults.BrainClientType;
+        OllamaUrl = defaults.OllamaUrl;
+        OllamaModel = defaults.OllamaModel;
     }
 
     #endregion
@@ -560,5 +642,15 @@ public sealed record BubbleStyleOption(string Value, string DisplayName, string 
 /// Represents an accent color option.
 /// </summary>
 public sealed record AccentColorOption(string HexColor, string Name, string Emoji);
+
+/// <summary>
+/// Represents a brain client type option.
+/// </summary>
+public sealed record BrainClientOption(string Value, string DisplayName, string Description);
+
+/// <summary>
+/// Represents an Ollama model option.
+/// </summary>
+public sealed record OllamaModelOption(string Value, string DisplayName, string Description);
 
 #endregion

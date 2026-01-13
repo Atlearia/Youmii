@@ -15,6 +15,10 @@ public sealed class SettingsCoordinator : IDisposable
     private readonly StartupService _startupService;
     private bool _disposed;
 
+    // Track previous AI settings to detect changes
+    private string _previousBrainClientType = string.Empty;
+    private string _previousOllamaModel = string.Empty;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsCoordinator"/> class.
     /// </summary>
@@ -45,6 +49,10 @@ public sealed class SettingsCoordinator : IDisposable
     public async Task LoadSettingsAsync()
     {
         await _settingsService.LoadAsync();
+        
+        // Store initial AI settings
+        _previousBrainClientType = _settingsService.CurrentSettings.BrainClientType;
+        _previousOllamaModel = _settingsService.CurrentSettings.OllamaModel;
     }
 
     /// <summary>
@@ -54,11 +62,19 @@ public sealed class SettingsCoordinator : IDisposable
     {
         var settings = _settingsService.CurrentSettings;
 
+        // Check if AI settings changed
+        bool aiSettingsChanged = settings.BrainClientType != _previousBrainClientType ||
+                                  settings.OllamaModel != _previousOllamaModel;
+
         // Sync startup with Windows
         _startupService.SyncWithSettings(settings.StartWithWindows);
 
         // Raise event with applied settings
-        SettingsApplied?.Invoke(this, new SettingsAppliedEventArgs(settings));
+        SettingsApplied?.Invoke(this, new SettingsAppliedEventArgs(settings, aiSettingsChanged));
+
+        // Update tracked values
+        _previousBrainClientType = settings.BrainClientType;
+        _previousOllamaModel = settings.OllamaModel;
     }
 
     /// <summary>
@@ -95,13 +111,19 @@ public sealed class SettingsCoordinator : IDisposable
 /// </summary>
 public sealed class SettingsAppliedEventArgs : EventArgs
 {
-    public SettingsAppliedEventArgs(IUserSettings settings)
+    public SettingsAppliedEventArgs(IUserSettings settings, bool aiSettingsChanged = false)
     {
         Settings = settings;
+        AiSettingsChanged = aiSettingsChanged;
     }
 
     /// <summary>
     /// Gets the applied settings.
     /// </summary>
     public IUserSettings Settings { get; }
+
+    /// <summary>
+    /// Gets whether AI-related settings (backend or model) changed.
+    /// </summary>
+    public bool AiSettingsChanged { get; }
 }

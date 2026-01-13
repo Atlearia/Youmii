@@ -22,7 +22,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly IdleMessageCoordinator _idleMessageCoordinator;
     private readonly GamesCoordinator _gamesCoordinator;
     private readonly DispatcherTimer _autoHideTimer;
-    private readonly string _brainClientName;
+    private readonly IBrainClient _brainClient;
 
     private string _userInput = string.Empty;
     private string _bubbleText = string.Empty;
@@ -40,15 +40,14 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         // Initialize infrastructure
         _serviceFactory = new ServiceFactory();
         
-        // Get brain client and store its name for display
-        var brainClient = _serviceFactory.CreateBrainClient();
-        _brainClientName = brainClient.ClientName;
+        // Get brain client and store reference
+        _brainClient = _serviceFactory.CreateBrainClient();
         
         // Initialize feature coordinators
         _settingsCoordinator = new SettingsCoordinator();
         _chatCoordinator = new ChatCoordinator(
             _serviceFactory.CreateConversationService(),
-            brainClient
+            _brainClient
         );
         _idleMessageCoordinator = new IdleMessageCoordinator();
         _gamesCoordinator = new GamesCoordinator();
@@ -244,13 +243,19 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             
             // Initialize database
             await _serviceFactory.InitializeAsync();
+
+            // Initialize brain client (detects Ollama availability for SmartBrainClient)
+            if (_brainClient is Infrastructure.Brain.SmartBrainClient smartClient)
+            {
+                await smartClient.InitializeAsync();
+            }
             
             // Start idle messages
             _idleMessageCoordinator.Start();
             
-            // Show welcome message with AI backend info
+            // Show welcome message with AI backend info (now properly initialized)
             var name = _settingsCoordinator.CurrentSettings.CharacterName;
-            ShowBubble($"Hello! I'm {name}! Using: {_brainClientName}");
+            ShowBubble($"Hello! I'm {name}! Using: {_brainClient.ClientName}");
         }
         catch (Exception ex)
         {
@@ -264,8 +269,45 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     private void OpenSettings()
     {
+        // Store current AI settings before opening dialog
+        var previousBrainType = _settingsCoordinator.CurrentSettings.BrainClientType;
+        var previousModel = _settingsCoordinator.CurrentSettings.OllamaModel;
+        
         var saved = _settingsCoordinator.OpenSettingsDialog();
-        ShowBubble(saved ? "Settings saved! ??" : "Settings unchanged~");
+        
+        if (saved)
+        {
+            var settings = _settingsCoordinator.CurrentSettings;
+            
+            // Check if AI settings changed
+            if (settings.BrainClientType != previousBrainType || 
+                settings.OllamaModel != previousModel)
+            {
+                // Build the "Now using" message
+                var aiDescription = GetAiBackendDescription(settings.BrainClientType, settings.OllamaModel);
+                ShowBubble($"Now using: {aiDescription}! ?? Restart app to apply changes~");
+            }
+            else
+            {
+                ShowBubble("Settings saved! ?");
+            }
+        }
+        else
+        {
+            ShowBubble("Settings unchanged~");
+        }
+    }
+
+    private static string GetAiBackendDescription(string brainClientType, string ollamaModel)
+    {
+        return brainClientType switch
+        {
+            "Auto" => $"Auto-detect (Ollama {ollamaModel})",
+            "Ollama" => $"Ollama ({ollamaModel})",
+            "Stub" => "Offline Mode",
+            "Http" => "HTTP Server",
+            _ => brainClientType
+        };
     }
 
     private void OnSettingsApplied(object? sender, SettingsAppliedEventArgs e)
