@@ -45,7 +45,8 @@ public sealed class ServiceContainer : IServiceLocator, IApplicationLifetime, ID
 
         // Register repositories
         RegisterFactory<IMessageRepository>(() => 
-            new SqliteMessageRepository(Resolve<ISqliteConnectionFactory>()));
+            new SqliteMessageRepository(Resolve<ISqliteConnectionFactory>()))
+        ;
         RegisterFactory<IFactRepository>(() => 
             new SqliteFactRepository(Resolve<ISqliteConnectionFactory>()));
 
@@ -66,9 +67,16 @@ public sealed class ServiceContainer : IServiceLocator, IApplicationLifetime, ID
     {
         var clientType = Settings.BrainClientType;
 
-        if (clientType.Equals(BrainClientTypes.Ollama, StringComparison.OrdinalIgnoreCase))
+        if (clientType.Equals(BrainClientTypes.Auto, StringComparison.OrdinalIgnoreCase))
         {
-            // Use Ollama for local LLM
+            // Auto-detect: tries Ollama, falls back to Stub
+            var smartClient = new SmartBrainClient(Settings.OllamaUrl, Settings.OllamaModel);
+            _disposables.Add(smartClient);
+            RegisterSingleton<IBrainClient>(smartClient);
+        }
+        else if (clientType.Equals(BrainClientTypes.Ollama, StringComparison.OrdinalIgnoreCase))
+        {
+            // Use Ollama for local LLM (no fallback)
             var ollamaClient = new OllamaBrainClient(Settings.OllamaUrl, Settings.OllamaModel);
             _disposables.Add(ollamaClient);
             RegisterSingleton<IBrainClient>(ollamaClient);
