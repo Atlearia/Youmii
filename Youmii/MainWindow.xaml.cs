@@ -108,7 +108,35 @@ namespace Youmii
             }
         }
 
+        #region Left-Click Drag
+
         private void Character_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.ResetIdleTimer();
+            }
+
+            // Use WPF's built-in window drag
+            e.Handled = true;
+            DragMove();
+        }
+
+        private void Character_MouseMove(object sender, MouseEventArgs e)
+        {
+            // No longer needed - DragMove handles everything
+        }
+
+        private void Character_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // No longer needed - DragMove handles everything
+        }
+
+        #endregion
+
+        #region Right-Click Radial Menu
+
+        private void Character_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is MainViewModel vm)
             {
@@ -137,7 +165,7 @@ namespace Youmii
             }
         }
 
-        private void Character_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void Character_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is MainViewModel vm && _isRadialMenuHeld)
             {
@@ -174,6 +202,8 @@ namespace Youmii
                 e.Handled = true;
             }
         }
+
+        #endregion
 
         private void InputTextBox_KeyDown(object sender, KeyEventArgs e)
         {
