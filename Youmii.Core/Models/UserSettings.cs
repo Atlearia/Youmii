@@ -73,6 +73,17 @@ public sealed class UserSettings : IUserSettings
     /// <inheritdoc />
     public double AnimationSpeed { get; set; } = 1.0;
 
+    // AI Settings
+
+    /// <inheritdoc />
+    public string BrainClientType { get; set; } = "Auto";
+
+    /// <inheritdoc />
+    public string OllamaUrl { get; set; } = "http://localhost:11434";
+
+    /// <inheritdoc />
+    public string OllamaModel { get; set; } = "llama3.2";
+
     /// <summary>
     /// Creates a deep copy of the settings.
     /// </summary>
@@ -90,7 +101,7 @@ public sealed class UserSettings : IUserSettings
             SoundEffectsEnabled = SoundEffectsEnabled,
             StartWithWindows = StartWithWindows,
             CharacterScale = CharacterScale,
-            // New properties
+            // Personality properties
             PersonalityType = PersonalityType,
             SpeechStyle = SpeechStyle,
             ChattinessLevel = ChattinessLevel,
@@ -100,7 +111,11 @@ public sealed class UserSettings : IUserSettings
             BounceAnimationEnabled = BounceAnimationEnabled,
             SparkleEffectsEnabled = SparkleEffectsEnabled,
             TypingAnimationEnabled = TypingAnimationEnabled,
-            AnimationSpeed = AnimationSpeed
+            AnimationSpeed = AnimationSpeed,
+            // AI properties
+            BrainClientType = BrainClientType,
+            OllamaUrl = OllamaUrl,
+            OllamaModel = OllamaModel
         };
     }
 
@@ -119,7 +134,7 @@ public sealed class UserSettings : IUserSettings
         SoundEffectsEnabled = other.SoundEffectsEnabled;
         StartWithWindows = other.StartWithWindows;
         CharacterScale = other.CharacterScale;
-        // New properties
+        // Personality properties
         PersonalityType = other.PersonalityType;
         SpeechStyle = other.SpeechStyle;
         ChattinessLevel = other.ChattinessLevel;
@@ -130,6 +145,10 @@ public sealed class UserSettings : IUserSettings
         SparkleEffectsEnabled = other.SparkleEffectsEnabled;
         TypingAnimationEnabled = other.TypingAnimationEnabled;
         AnimationSpeed = other.AnimationSpeed;
+        // AI properties
+        BrainClientType = other.BrainClientType;
+        OllamaUrl = other.OllamaUrl;
+        OllamaModel = other.OllamaModel;
     }
 
     /// <summary>
@@ -147,7 +166,7 @@ public sealed class UserSettings : IUserSettings
         SoundEffectsEnabled = true;
         StartWithWindows = false;
         CharacterScale = 1.0;
-        // New properties
+        // Personality properties
         PersonalityType = "cheerful";
         SpeechStyle = "cute";
         ChattinessLevel = 50;
@@ -158,5 +177,9 @@ public sealed class UserSettings : IUserSettings
         SparkleEffectsEnabled = true;
         TypingAnimationEnabled = true;
         AnimationSpeed = 1.0;
+        // AI properties
+        BrainClientType = "Auto";
+        OllamaUrl = "http://localhost:11434";
+        OllamaModel = "llama3.2";
     }
 }

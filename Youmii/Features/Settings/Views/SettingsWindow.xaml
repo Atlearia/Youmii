@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:Youmii.Converters"
         mc:Ignorable="d"
         Title="? Settings"
         Width="440"
@@ -15,6 +16,9 @@
         Topmost="True">
 
     <Window.Resources>
+        <!-- Converters -->
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        
         <!-- Gradient Background -->
         <LinearGradientBrush x:Key="SettingsBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="#FFFCE4EC" Offset="0"/>
@@ -759,6 +763,60 @@
                         <CheckBox Grid.Column="1" Style="{StaticResource KawaiiToggleStyle}"
                                   IsChecked="{Binding StartWithWindows}"/>
                     </Grid>
+
+                    <!-- AI Section (NEW) -->
+                    <TextBlock Text="?? AI Settings" Style="{StaticResource SectionHeaderStyle}"/>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="AI Backend" Style="{StaticResource SettingsLabelStyle}"/>
+                            <TextBlock Text="Choose how Youmii responds" Style="{StaticResource SubLabelStyle}"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                  ItemsSource="{Binding BrainClientTypes}"
+                                  SelectedValue="{Binding BrainClientType}"
+                                  SelectedValuePath="Value"
+                                  DisplayMemberPath="DisplayName"/>
+                    </Grid>
+
+                    <!-- Ollama Settings (shown when Auto or Ollama selected) -->
+                    <StackPanel Visibility="{Binding IsOllamaSettingsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Ollama Model" Style="{StaticResource SettingsLabelStyle}"/>
+                                <TextBlock Text="Which AI model to use" Style="{StaticResource SubLabelStyle}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Width="160" Style="{StaticResource KawaiiComboBoxStyle}"
+                                      ItemsSource="{Binding OllamaModels}"
+                                      SelectedValue="{Binding OllamaModel}"
+                                      SelectedValuePath="Value"
+                                      DisplayMemberPath="DisplayName"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Ollama URL" Style="{StaticResource SettingsLabelStyle}" 
+                                       Margin="0,0,15,0"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBoxStyle}"
+                                     Text="{Binding OllamaUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+
+                        <Border Background="#20E91E63" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                            <TextBlock Text="?? Tip: Install Ollama from ollama.ai, then run 'ollama pull llama3.2' to download a model."
+                                       TextWrapping="Wrap" FontSize="11" Foreground="#FF757575"/>
+                        </Border>
+                    </StackPanel>
 
                 </StackPanel>
             </ScrollViewer>

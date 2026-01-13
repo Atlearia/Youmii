@@ -141,4 +141,21 @@ public interface IUserSettings
     /// Gets or sets the animation speed multiplier (0.5 to 2.0).
     /// </summary>
     double AnimationSpeed { get; set; }
+
+    // AI Settings
+
+    /// <summary>
+    /// Gets or sets the brain client type ("Auto", "Ollama", "Stub", "Http").
+    /// </summary>
+    string BrainClientType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Ollama server URL.
+    /// </summary>
+    string OllamaUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Ollama model name.
+    /// </summary>
+    string OllamaModel { get; set; }
 }
