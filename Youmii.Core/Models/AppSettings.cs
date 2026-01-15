@@ -6,18 +6,13 @@ namespace Youmii.Core.Models;
 public sealed class AppSettings
 {
     /// <summary>
-    /// Type of brain client: "Auto", "Stub", "Http", or "Ollama"
+    /// Type of brain client: "Auto", "Stub", or "Ollama"
     /// "Auto" will detect Ollama and fall back to Stub if unavailable.
     /// </summary>
     public string BrainClientType { get; set; } = "Auto";
     
     /// <summary>
-    /// URL for the HTTP brain server (when using "Http" type).
-    /// </summary>
-    public string BrainServerUrl { get; set; } = "http://localhost:5180";
-    
-    /// <summary>
-    /// URL for Ollama API (when using "Ollama" type).
+    /// URL for Ollama API.
     /// </summary>
     public string OllamaUrl { get; set; } = "http://localhost:11434";
     
@@ -50,6 +45,5 @@ public static class BrainClientTypes
     /// <summary>Auto-detect: tries Ollama first, falls back to Stub.</summary>
     public const string Auto = "Auto";
     public const string Stub = "Stub";
-    public const string Http = "Http";
     public const string Ollama = "Ollama";
 }

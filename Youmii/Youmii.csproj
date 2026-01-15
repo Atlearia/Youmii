@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Bootstrap\" />
     <Folder Include="Services\" />
     <Folder Include="Views\" />
   </ItemGroup>

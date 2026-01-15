@@ -69,8 +69,7 @@ public sealed class SettingsViewModel : ViewModelBase
         {
             new(Core.Models.BrainClientTypes.Auto, "Auto-detect", "Automatically uses Ollama if available, falls back to offline mode"),
             new(Core.Models.BrainClientTypes.Ollama, "Ollama (Local AI)", "Use local Ollama server for AI responses"),
-            new(Core.Models.BrainClientTypes.Stub, "Offline Mode", "Uses pre-written responses (no AI)"),
-            new(Core.Models.BrainClientTypes.Http, "HTTP Server", "Connect to a custom brain server")
+            new(Core.Models.BrainClientTypes.Stub, "Offline Mode", "Uses pre-written responses (no AI)")
         };
 
         OllamaModels = new ObservableCollection<OllamaModelOption>

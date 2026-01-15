@@ -7,6 +7,7 @@ using Youmii.Features.Games.Services;
 using Youmii.Features.IdleMessages.Services;
 using Youmii.Features.Settings.Services;
 using Youmii.Infrastructure;
+using Youmii.Infrastructure.Brain;
 
 namespace Youmii.ViewModels;
 
@@ -16,7 +17,7 @@ namespace Youmii.ViewModels;
 /// </summary>
 public sealed class MainViewModel : ViewModelBase, IDisposable
 {
-    private readonly ServiceFactory _serviceFactory;
+    private readonly AppServices _appServices;
     private readonly SettingsCoordinator _settingsCoordinator;
     private readonly ChatCoordinator _chatCoordinator;
     private readonly IdleMessageCoordinator _idleMessageCoordinator;
@@ -37,16 +38,16 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public MainViewModel()
     {
-        // Initialize infrastructure
-        _serviceFactory = new ServiceFactory();
+        // Initialize infrastructure (simple factory, no DI container)
+        _appServices = new AppServices();
         
-        // Get brain client and store reference
-        _brainClient = _serviceFactory.CreateBrainClient();
+        // Get brain client reference
+        _brainClient = _appServices.BrainClient;
         
         // Initialize feature coordinators
         _settingsCoordinator = new SettingsCoordinator();
         _chatCoordinator = new ChatCoordinator(
-            _serviceFactory.CreateConversationService(),
+            _appServices.CreateConversationService(),
             _brainClient
         );
         _idleMessageCoordinator = new IdleMessageCoordinator();
@@ -290,10 +291,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             _settingsCoordinator.ApplySettings();
             
             // Initialize database
-            await _serviceFactory.InitializeAsync();
+            await _appServices.InitializeAsync();
 
             // Initialize brain client (detects Ollama availability for SmartBrainClient)
-            if (_brainClient is Infrastructure.Brain.SmartBrainClient smartClient)
+            if (_brainClient is SmartBrainClient smartClient)
             {
                 await smartClient.InitializeAsync();
             }
@@ -353,7 +354,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             "Auto" => $"Auto-detect (Ollama {ollamaModel})",
             "Ollama" => $"Ollama ({ollamaModel})",
             "Stub" => "Offline Mode",
-            "Http" => "HTTP Server",
             _ => brainClientType
         };
     }
@@ -534,7 +534,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         // Dispose coordinators
         _settingsCoordinator.Dispose();
         _idleMessageCoordinator.Dispose();
-        _serviceFactory.Dispose();
+        _appServices.Dispose();
     }
 
     #endregion
