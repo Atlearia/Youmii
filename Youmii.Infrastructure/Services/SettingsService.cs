@@ -2,7 +2,7 @@ using System.Text.Json;
 using Youmii.Core.Interfaces;
 using Youmii.Core.Models;
 
-namespace Youmii.Core.Services;
+namespace Youmii.Infrastructure.Services;
 
 /// <summary>
 /// Service for persisting user settings to JSON file.
