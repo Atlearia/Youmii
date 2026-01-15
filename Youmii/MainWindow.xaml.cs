@@ -44,6 +44,9 @@ namespace Youmii
             // Focus input if visible
             if (DataContext is MainViewModel vm)
             {
+                // Set initial character scale
+                _inertiaBehavior.SetCharacterScale(vm.CharacterScale);
+                
                 // Load saved screen bounds
                 ApplyScreenBoundsFromSettings(vm);
                 
@@ -52,7 +55,7 @@ namespace Youmii
                     InputTextBox.Focus();
                 }
 
-                // Subscribe to character dimming changes
+                // Subscribe to character dimming changes and scale changes
                 vm.PropertyChanged += OnViewModelPropertyChanged;
 
                 // Subscribe to radial menu events
@@ -122,9 +125,16 @@ namespace Youmii
 
         private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainViewModel.IsCharacterDimmed) && sender is MainViewModel vm)
+            if (sender is not MainViewModel vm) return;
+            
+            if (e.PropertyName == nameof(MainViewModel.IsCharacterDimmed))
             {
                 AnimateCharacterDim(vm.IsCharacterDimmed);
+            }
+            else if (e.PropertyName == nameof(MainViewModel.CharacterScale))
+            {
+                // Update inertia behavior with new character scale
+                _inertiaBehavior?.SetCharacterScale(vm.CharacterScale);
             }
         }
 

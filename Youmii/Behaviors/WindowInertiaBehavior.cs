@@ -7,6 +7,7 @@ namespace Youmii.Behaviors;
 /// <summary>
 /// Provides drag inertia behavior for a Window.
 /// Works in device pixel coordinates for accurate screen bounds.
+/// Collision detection uses character bounds, not window bounds.
 /// </summary>
 public sealed class WindowInertiaBehavior : IDisposable
 {
@@ -16,6 +17,13 @@ public sealed class WindowInertiaBehavior : IDisposable
     private const int TickIntervalMs = 16;
     private const int VelocitySamples = 3;
     private const double SampleExpirationMs = 100.0;
+
+    // Character base size in WPF logical units (from XAML: Width="200" Height="200")
+    private const double CharacterBaseSize = 200.0;
+    
+    // Character offset from window top (speech bubble + margins)
+    // From XAML: Grid.Row="1" with Margin="0,15,0,10", plus speech bubble above
+    private const double CharacterTopOffsetWpf = 100.0; // Approximate offset from window top to character center area
 
     private readonly Window _window;
     private readonly DispatcherTimer _inertiaTimer;
@@ -27,6 +35,9 @@ public sealed class WindowInertiaBehavior : IDisposable
     private double _velocityY;
     private bool _isDragging;
     private bool _disposed;
+
+    // Character scale (1.0 = 100%, 2.0 = 200%)
+    private double _characterScale = 1.0;
 
     // Custom screen bounds in PIXELS
     private bool _useCustomBounds;
@@ -47,6 +58,14 @@ public sealed class WindowInertiaBehavior : IDisposable
             Interval = TimeSpan.FromMilliseconds(TickIntervalMs)
         };
         _inertiaTimer.Tick += OnInertiaTick;
+    }
+
+    /// <summary>
+    /// Sets the character scale for accurate collision detection.
+    /// </summary>
+    public void SetCharacterScale(double scale)
+    {
+        _characterScale = Math.Max(0.5, Math.Min(2.0, scale));
     }
 
     /// <summary>
@@ -81,14 +100,11 @@ public sealed class WindowInertiaBehavior : IDisposable
 
         if (deltaTime > 0.001)
         {
-            // Delta in pixels
             var deltaXPixels = screenPositionPixels.X - _lastMouseScreenPosition.X;
             var deltaYPixels = screenPositionPixels.Y - _lastMouseScreenPosition.Y;
 
-            // Get DPI scale for this movement
             var dpiScale = GetDpiScale();
             
-            // Convert delta to WPF logical units for window movement
             var deltaXWpf = deltaXPixels / dpiScale;
             var deltaYWpf = deltaYPixels / dpiScale;
 
@@ -170,22 +186,6 @@ public sealed class WindowInertiaBehavior : IDisposable
     }
 
     /// <summary>
-    /// Gets the actual window size in pixels using Win32 API.
-    /// </summary>
-    private (double Width, double Height) GetWindowSizeInPixels()
-    {
-        var hwnd = new WindowInteropHelper(_window).Handle;
-        if (hwnd != IntPtr.Zero && GetWindowRect(hwnd, out RECT rect))
-        {
-            return (rect.Right - rect.Left, rect.Bottom - rect.Top);
-        }
-        
-        // Fallback
-        var dpi = GetDpiScale();
-        return (_window.ActualWidth * dpi, _window.ActualHeight * dpi);
-    }
-
-    /// <summary>
     /// Gets the actual window position in pixels using Win32 API.
     /// </summary>
     private (double Left, double Top) GetWindowPositionInPixels()
@@ -196,9 +196,42 @@ public sealed class WindowInertiaBehavior : IDisposable
             return (rect.Left, rect.Top);
         }
         
-        // Fallback
         var dpi = GetDpiScale();
         return (_window.Left * dpi, _window.Top * dpi);
+    }
+
+    /// <summary>
+    /// Gets the character bounds in screen pixel coordinates.
+    /// The character is centered horizontally in the window with an offset from top.
+    /// </summary>
+    private (double Left, double Top, double Right, double Bottom) GetCharacterBoundsInPixels()
+    {
+        var dpiScale = GetDpiScale();
+        var (windowLeftPixels, windowTopPixels) = GetWindowPositionInPixels();
+
+        // Character size in pixels (base size * scale * DPI)
+        var characterSizePixels = CharacterBaseSize * _characterScale * dpiScale;
+
+        // Window width in pixels
+        var hwnd = new WindowInteropHelper(_window).Handle;
+        double windowWidthPixels = _window.ActualWidth * dpiScale;
+        if (hwnd != IntPtr.Zero && GetWindowRect(hwnd, out RECT rect))
+        {
+            windowWidthPixels = rect.Right - rect.Left;
+        }
+
+        // Character is horizontally centered in the window
+        var characterLeftOffset = (windowWidthPixels - characterSizePixels) / 2.0;
+        
+        // Character vertical offset from window top (in pixels)
+        var characterTopOffset = CharacterTopOffsetWpf * dpiScale;
+
+        var charLeft = windowLeftPixels + characterLeftOffset;
+        var charTop = windowTopPixels + characterTopOffset;
+        var charRight = charLeft + characterSizePixels;
+        var charBottom = charTop + characterSizePixels;
+
+        return (charLeft, charTop, charRight, charBottom);
     }
 
     private void OnInertiaTick(object? sender, EventArgs e)
@@ -210,56 +243,67 @@ public sealed class WindowInertiaBehavior : IDisposable
         var moveXPixels = _velocityX * tickSeconds;
         var moveYPixels = _velocityY * tickSeconds;
 
-        // Get current window position and size in PIXELS (from Win32)
-        var (currentLeftPixels, currentTopPixels) = GetWindowPositionInPixels();
-        var (windowWidthPixels, windowHeightPixels) = GetWindowSizeInPixels();
+        // Get current CHARACTER bounds (not window bounds)
+        var (charLeft, charTop, charRight, charBottom) = GetCharacterBoundsInPixels();
 
-        // Apply movement in pixels
-        var newLeftPixels = currentLeftPixels + moveXPixels;
-        var newTopPixels = currentTopPixels + moveYPixels;
+        // Calculate new character position after movement
+        var newCharLeft = charLeft + moveXPixels;
+        var newCharTop = charTop + moveYPixels;
+        var newCharRight = charRight + moveXPixels;
+        var newCharBottom = charBottom + moveYPixels;
 
-        // Get bounds (in pixels)
-        var (left, top, right, bottom) = _useCustomBounds 
+        // Get screen bounds (in pixels)
+        var (boundLeft, boundTop, boundRight, boundBottom) = _useCustomBounds 
             ? (_customLeft, _customTop, _customRight, _customBottom)
             : (0.0, 0.0, (double)GetSystemMetrics(0), (double)GetSystemMetrics(1));
 
         var collisionOccurred = false;
         var collisionSpeed = 0.0;
 
-        // Check bounds in pixel coordinates
-        if (newLeftPixels < left)
+        // Adjustment to apply to window position
+        var adjustX = 0.0;
+        var adjustY = 0.0;
+
+        // Check LEFT boundary (character left edge)
+        if (newCharLeft < boundLeft)
         {
             collisionSpeed = Math.Max(collisionSpeed, Math.Abs(_velocityX));
-            newLeftPixels = left;
+            adjustX = boundLeft - newCharLeft;
             _velocityX = -_velocityX * 0.3;
             collisionOccurred = true;
         }
-        else if (newLeftPixels + windowWidthPixels > right)
+        // Check RIGHT boundary (character right edge)
+        else if (newCharRight > boundRight)
         {
             collisionSpeed = Math.Max(collisionSpeed, Math.Abs(_velocityX));
-            newLeftPixels = right - windowWidthPixels;
+            adjustX = boundRight - newCharRight;
             _velocityX = -_velocityX * 0.3;
             collisionOccurred = true;
         }
 
-        if (newTopPixels < top)
+        // Check TOP boundary (character top edge)
+        if (newCharTop < boundTop)
         {
             collisionSpeed = Math.Max(collisionSpeed, Math.Abs(_velocityY));
-            newTopPixels = top;
+            adjustY = boundTop - newCharTop;
             _velocityY = -_velocityY * 0.3;
             collisionOccurred = true;
         }
-        else if (newTopPixels + windowHeightPixels > bottom)
+        // Check BOTTOM boundary (character bottom edge)
+        else if (newCharBottom > boundBottom)
         {
             collisionSpeed = Math.Max(collisionSpeed, Math.Abs(_velocityY));
-            newTopPixels = bottom - windowHeightPixels;
+            adjustY = boundBottom - newCharBottom;
             _velocityY = -_velocityY * 0.3;
             collisionOccurred = true;
         }
 
-        // Convert back to WPF units and apply
-        _window.Left = newLeftPixels / dpiScale;
-        _window.Top = newTopPixels / dpiScale;
+        // Apply movement to window (in WPF units)
+        var totalMoveXPixels = moveXPixels + adjustX;
+        var totalMoveYPixels = moveYPixels + adjustY;
+        
+        _window.Left += totalMoveXPixels / dpiScale;
+        _window.Top += totalMoveYPixels / dpiScale;
 
         if (collisionOccurred && collisionSpeed > CollisionThreshold)
             BoundaryCollision?.Invoke(this, EventArgs.Empty);
