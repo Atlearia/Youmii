@@ -8,6 +8,7 @@
         xmlns:converters="clr-namespace:Youmii.Converters"
         xmlns:behaviors="clr-namespace:Youmii.Behaviors"
         xmlns:controls="clr-namespace:Youmii.Controls"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
         Title="Youmii"
         Width="400"
@@ -169,7 +170,7 @@
                     <ScaleTransform ScaleX="{Binding CharacterScale}" ScaleY="{Binding CharacterScale}"/>
                 </Border.RenderTransform>
                 <Image x:Name="CharacterImage"
-                       Source="/Assets/character.png" 
+                       gif:ImageBehavior.AnimatedSource="/Assets/default_animation.gif"
                        Width="200" 
                        Height="200" 
                        Stretch="Uniform"
