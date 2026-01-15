@@ -46,7 +46,7 @@ public sealed class RadialMenuService : IRadialMenuService
         {
             new() { Id = "chat", Icon = "??", Label = "Chat" },
             new() { Id = "settings", Icon = "??", Label = "Settings" },
-            new() { Id = "mood", Icon = "??", Label = "Mood" },
+            new() { Id = "bounds", Icon = "??", Label = "Bounds" },
             new() { Id = "music", Icon = "??", Label = "Music" },
             new() { Id = "games", Icon = "??", Label = "Games" },
             new() { Id = "sleep", Icon = "??", Label = "Sleep" },

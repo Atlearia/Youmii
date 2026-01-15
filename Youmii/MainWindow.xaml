@@ -159,6 +159,8 @@
                     Margin="0,15,0,10"
                     Cursor="SizeAll"
                     MouseLeftButtonDown="Character_MouseLeftButtonDown"
+                    MouseMove="Character_MouseMove"
+                    MouseLeftButtonUp="Character_MouseLeftButtonUp"
                     MouseRightButtonDown="Character_MouseRightButtonDown"
                     MouseRightButtonUp="Character_MouseRightButtonUp"
                     Background="Transparent"

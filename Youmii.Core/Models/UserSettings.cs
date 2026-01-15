@@ -84,6 +84,23 @@ public sealed class UserSettings : IUserSettings
     /// <inheritdoc />
     public string OllamaModel { get; set; } = "llama3.2";
 
+    // Screen Bounds Settings
+
+    /// <inheritdoc />
+    public bool CustomScreenBoundsEnabled { get; set; } = false;
+
+    /// <inheritdoc />
+    public double ScreenBoundsLeft { get; set; } = 0;
+
+    /// <inheritdoc />
+    public double ScreenBoundsTop { get; set; } = 0;
+
+    /// <inheritdoc />
+    public double ScreenBoundsRight { get; set; } = 1920;
+
+    /// <inheritdoc />
+    public double ScreenBoundsBottom { get; set; } = 1080;
+
     /// <summary>
     /// Creates a deep copy of the settings.
     /// </summary>
@@ -115,7 +132,13 @@ public sealed class UserSettings : IUserSettings
             // AI properties
             BrainClientType = BrainClientType,
             OllamaUrl = OllamaUrl,
-            OllamaModel = OllamaModel
+            OllamaModel = OllamaModel,
+            // Screen bounds properties
+            CustomScreenBoundsEnabled = CustomScreenBoundsEnabled,
+            ScreenBoundsLeft = ScreenBoundsLeft,
+            ScreenBoundsTop = ScreenBoundsTop,
+            ScreenBoundsRight = ScreenBoundsRight,
+            ScreenBoundsBottom = ScreenBoundsBottom
         };
     }
 
@@ -149,6 +172,12 @@ public sealed class UserSettings : IUserSettings
         BrainClientType = other.BrainClientType;
         OllamaUrl = other.OllamaUrl;
         OllamaModel = other.OllamaModel;
+        // Screen bounds properties
+        CustomScreenBoundsEnabled = other.CustomScreenBoundsEnabled;
+        ScreenBoundsLeft = other.ScreenBoundsLeft;
+        ScreenBoundsTop = other.ScreenBoundsTop;
+        ScreenBoundsRight = other.ScreenBoundsRight;
+        ScreenBoundsBottom = other.ScreenBoundsBottom;
     }
 
     /// <summary>
@@ -181,5 +210,6 @@ public sealed class UserSettings : IUserSettings
         BrainClientType = "Auto";
         OllamaUrl = "http://localhost:11434";
         OllamaModel = "llama3.2";
+        // Screen bounds properties (don't reset - keep user's configured bounds)
     }
 }
