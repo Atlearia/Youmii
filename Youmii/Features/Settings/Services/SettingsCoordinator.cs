@@ -1,5 +1,5 @@
 using Youmii.Core.Interfaces;
-using Youmii.Core.Services;
+using Youmii.Infrastructure.Services;
 using Youmii.Features.Settings.ViewModels;
 using Youmii.Features.Settings.Views;
 
