@@ -198,6 +198,11 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     #region Public Methods
 
     /// <summary>
+    /// Event raised when the user wants to set screen bounds.
+    /// </summary>
+    public event EventHandler? SetBoundsRequested;
+
+    /// <summary>
     /// Handles when a radial menu item is selected.
     /// </summary>
     public void HandleRadialMenuItemSelected(RadialMenuItem item)
@@ -215,6 +220,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             case "games":
                 OpenGames();
                 break;
+            case "bounds":
+                OpenSetBounds();
+                break;
             default:
                 ShowBubble($"{item.Icon} {item.Label} - Coming soon!");
                 break;
@@ -227,6 +235,46 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public void ResetIdleTimer()
     {
         _idleMessageCoordinator.ResetTimer();
+    }
+
+    /// <summary>
+    /// Shows an "ouch" message when the character hits a screen boundary.
+    /// </summary>
+    public void ShowOuchMessage()
+    {
+        ShowBubble("Ouch! ??");
+    }
+
+    /// <summary>
+    /// Gets the current screen bounds settings.
+    /// </summary>
+    public (bool Enabled, double Left, double Top, double Right, double Bottom) GetScreenBoundsSettings()
+    {
+        var settings = _settingsCoordinator.CurrentSettings;
+        return (
+            settings.CustomScreenBoundsEnabled,
+            settings.ScreenBoundsLeft,
+            settings.ScreenBoundsTop,
+            settings.ScreenBoundsRight,
+            settings.ScreenBoundsBottom
+        );
+    }
+
+    /// <summary>
+    /// Saves new screen bounds to settings.
+    /// </summary>
+    public async Task SaveScreenBoundsAsync(double left, double top, double right, double bottom)
+    {
+        var settings = _settingsCoordinator.CurrentSettings;
+        settings.CustomScreenBoundsEnabled = true;
+        settings.ScreenBoundsLeft = left;
+        settings.ScreenBoundsTop = top;
+        settings.ScreenBoundsRight = right;
+        settings.ScreenBoundsBottom = bottom;
+        
+        await _settingsCoordinator.SettingsService.SaveAsync();
+        
+        ShowBubble("Screen bounds saved! ??");
     }
 
     #endregion
@@ -394,6 +442,25 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 {
                     ShowBubble("Come back when you want to play~");
                 }
+            }));
+    }
+
+    #endregion
+
+    #region Private Methods - Screen Bounds
+
+    private void OpenSetBounds()
+    {
+        // Close the radial menu first
+        RadialMenu.Hide();
+        
+        // Use dispatcher to allow UI to update before triggering
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Background,
+            new Action(() =>
+            {
+                ShowBubble("Drag to select your play area! ??");
+                SetBoundsRequested?.Invoke(this, EventArgs.Empty);
             }));
     }
 
